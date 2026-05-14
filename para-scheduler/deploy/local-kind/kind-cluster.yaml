@@ -1,0 +1,24 @@
+# Kind cluster configuration for local para-sched testing.
+# Creates 1 control-plane + 3 worker nodes using K8s v1.33.4
+# (closest available kind image to target lab cluster v1.33.5).
+#
+# Usage:
+#   kind create cluster --name para-sched --config kind-cluster.yaml
+#   kind delete cluster --name para-sched
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.33.4
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        scheduler:
+          extraArgs:
+            leader-elect: "false"
+  - role: worker
+    image: kindest/node:v1.33.4
+  - role: worker
+    image: kindest/node:v1.33.4
+  - role: worker
+    image: kindest/node:v1.33.4

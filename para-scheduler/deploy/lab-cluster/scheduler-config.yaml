@@ -1,0 +1,19 @@
+# ConfigMap mounted into kube-scheduler pods as --config.
+# Uses in-cluster ServiceAccount token (kubeconfig: "").
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: para-scheduler-config
+  namespace: para-system
+data:
+  scheduler-config.yaml: |
+    apiVersion: kubescheduler.config.k8s.io/v1
+    kind: KubeSchedulerConfiguration
+    leaderElection:
+      leaderElect: false
+    clientConnection:
+      kubeconfig: ""
+      qps: 10000
+      burst: 10000
+    profiles:
+      - schedulerName: para-scheduler

@@ -1,0 +1,77 @@
+# Template for a single para-scheduler instance (lab cluster).
+# Variables (substituted by setup.sh / run-experiment.sh):
+#   ${SCHED_INDEX}  - instance index (0, 1, 2, ...)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: para-scheduler-${SCHED_INDEX}
+  namespace: para-system
+  labels:
+    app: para-scheduler
+    instance: sched-${SCHED_INDEX}
+    component: para-sched
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: para-scheduler
+      instance: sched-${SCHED_INDEX}
+  template:
+    metadata:
+      labels:
+        app: para-scheduler
+        instance: sched-${SCHED_INDEX}
+        component: para-sched
+    spec:
+      serviceAccountName: para-scheduler
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      containers:
+        - name: scheduler
+          image: para-scheduler/kube-scheduler:latest
+          imagePullPolicy: Never
+          command: ["/kube-scheduler"]
+          args:
+            - "--config=/etc/scheduler/scheduler-config.yaml"
+            - "--v=4"
+            - "--parasched-name=sched-${SCHED_INDEX}"
+            - "--parasched-candidate-k=2"
+            - "--parasched-strategy.name=QualityFirst"
+            - "--parasched-strategy.penalty-weight=0.3"
+            - "--parasched-enable-parsync=false"
+            - "--parasched-num-partitions=10"
+            - "--parasched-sync-period=1s"
+            - "--parasched-namespace=para-system"
+            - "--parasched-stats-name=default"
+          env:
+            - name: TZ
+              value: UTC
+          ports:
+            - name: metrics
+              containerPort: 10259
+              protocol: TCP
+          volumeMounts:
+            - name: scheduler-config
+              mountPath: /etc/scheduler
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              # Cap CPU per scheduler to keep total control-plane usage bounded
+              # at N=10. Grafana-observed per-instance peak during burst ≈ 2.5 CPU;
+              # 3000m gives ~1.2x headroom while leaving room for 10 instances to
+              # coexist without starving binder / dispatcher / apiserver on the
+              # control-plane. Memory is intentionally unbounded — cgroup OOM-kill
+              # of a scheduler pod mid-experiment would break the trial and skew
+              # aggregate stats.
+              cpu: 3000m
+      volumes:
+        - name: scheduler-config
+          configMap:
+            name: para-scheduler-config

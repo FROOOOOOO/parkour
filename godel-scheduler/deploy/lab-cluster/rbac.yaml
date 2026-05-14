@@ -1,0 +1,104 @@
+# RBAC for Godel baseline lab cluster.
+# Consolidated from godel-scheduler/manifests/base/roles/ so that this
+# deployment is self-contained and does not depend on the base manifest tree.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: godel
+  namespace: godel-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: godel
+rules:
+  - apiGroups: ["", "events.k8s.io"]
+    resources: ["events"]
+    verbs: ["create", "patch", "update"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resourceNames: ["kube-scheduler"]
+    resources: ["endpoints"]
+    verbs: ["get", "update"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods", "configmaps"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["bindings", "pods/binding"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["pods/status"]
+    verbs: ["patch", "update"]
+  - apiGroups: [""]
+    resources: ["replicationcontrollers", "services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps", "extensions"]
+    resources: ["replicasets", "deployments", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims", "persistentvolumes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["authentication.k8s.io"]
+    resources: ["tokenreviews"]
+    verbs: ["create"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["subjectaccessreviews"]
+    verbs: ["create"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes", "storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["scheduling.godel.kubewharf.io"]
+    resources:
+      - schedulers
+      - schedulers/status
+      - podgroups
+      - podgroups/status
+      - reservations
+      - reservations/status
+    verbs: ["*"]
+  - apiGroups: ["scheduling.k8s.io"]
+    resources: ["priorityclasses"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["node.godel.kubewharf.io"]
+    resources: ["nmnodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["node.katalyst.kubewharf.io"]
+    resources: ["customnoderesources"]
+    verbs: ["*"]
+  - apiGroups: ["*"]
+    resources: ["movements"]
+    verbs: ["list", "watch", "patch"]
+  - apiGroups: ["*"]
+    resources: ["movements/status"]
+    verbs: ["update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: godel
+subjects:
+  - kind: ServiceAccount
+    name: godel
+    namespace: godel-system
+roleRef:
+  kind: ClusterRole
+  name: godel
+  apiGroup: rbac.authorization.k8s.io

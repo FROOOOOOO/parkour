@@ -1,0 +1,46 @@
+#!/bin/sh
+# Copyright 2018 The Kubernetes Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -o errexit
+set -o nounset
+
+# $1 - Test type.
+# $2 - Optional test output directory path. If not provided default "out" is used.
+# $3 - Optional json metrics directory path. If not provided metrics will not be created.
+# $4 - Optional NodeLocalDNS IP to test against. If not provided, it uses 169.254.20.10.
+
+outDir=${2:-"out"}
+nodeLocalIP=${4:-"169.254.20.10"}
+mkdir -p ${outDir}
+
+pip3 install --break-system-packages numpy
+
+case "$1" in
+  kube-dns )
+    python3 py/run_perf.py --params params/kubedns/default.yaml --out-dir ${outDir} --use-cluster-dns
+    ;;
+  core-dns )
+    python3 py/run_perf.py --params params/coredns/default.yaml --out-dir ${outDir} --use-cluster-dns
+    ;;
+  node-local-dns )
+    python3 py/run_perf.py --params params/nodelocaldns/default.yaml --out-dir ${outDir} --nodecache-ip ${nodeLocalIP}
+    ;;
+esac
+
+if [ "$#" -ge 3 ]; then
+  mkdir -p $3
+  cd jsonify && go mod vendor
+  go run main.go --benchmarkDirPath=${outDir}/latest --jsonDirPath=$3 --benchmarkName="dns"
+fi

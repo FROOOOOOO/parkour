@@ -1,0 +1,23 @@
+# Template for a per-scheduler-instance NodePort Service.
+# Variables (substituted by setup.sh):
+#   ${SCHED_INDEX}     - instance index (0, 1, 2, ...)
+#   ${SCHED_NODE_PORT} - NodePort (30090 + SCHED_INDEX)
+apiVersion: v1
+kind: Service
+metadata:
+  name: scheduler-metrics-${SCHED_INDEX}
+  namespace: para-system
+  labels:
+    app: para-scheduler
+    instance: sched-${SCHED_INDEX}
+    component: para-sched
+spec:
+  type: NodePort
+  selector:
+    app: para-scheduler
+    instance: sched-${SCHED_INDEX}
+  ports:
+    - name: metrics
+      port: 10259
+      targetPort: 10259
+      nodePort: ${SCHED_NODE_PORT}

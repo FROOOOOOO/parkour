@@ -1,0 +1,657 @@
+# Prometheus configuration for para-sched experiments.
+# Covers up to 16 scheduler instances (NodePort 30090-30105).
+# Unused scheduler targets will show as "down" — no impact on active ones.
+#
+# Generated for lab cluster:
+#   A (<MONITORING_IP>) — Prometheus, Grafana, KWOK
+#   B (<MASTER_IP>) — Master, API Server, etcd, para-sched components
+#   C/D/E (<WORKER_IP>/29/30) — Workers
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+  external_labels:
+    job: "k8s-monitoring"
+
+storage:
+  tsdb:
+    out_of_order_time_window: 5m
+
+rule_files:
+  - "/etc/prometheus/rules/prom-rules.yml"
+
+scrape_configs:
+  # ============================================================
+  #  K8s core components
+  # ============================================================
+
+  # 1. kube-apiserver
+  - job_name: "kube-apiserver"
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:6443"]
+    tls_config:
+      ca_file: /etc/prometheus/tls/ca.crt
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "kube-apiserver"
+
+  # 2. kube-controller-manager
+  - job_name: "kube-controller-manager"
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:10257"]
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "kube-controller-manager"
+
+  # 3. kube-scheduler (default, disabled when para-sched replaces it)
+  - job_name: "kube-scheduler"
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:10259"]
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "kube-scheduler"
+
+  # 4. etcd
+  - job_name: "etcd"
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:2379"]
+    tls_config:
+      ca_file: /etc/prometheus/tls/etcd/ca.crt
+      cert_file: /etc/prometheus/tls/etcd/client.crt
+      key_file: /etc/prometheus/tls/etcd/client.key
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "etcd"
+
+  # 5. Node Exporter
+  - job_name: "nodes"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - "<MASTER_IP>:9100"
+          - "<WORKER_IP>:9100"
+          - "<WORKER_IP>:9100"
+          - "<WORKER_IP>:9100"
+
+  # 6. kubelet
+  - job_name: "kubelet"
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - "<MASTER_IP>:10250"
+          - "<WORKER_IP>:10250"
+          - "<WORKER_IP>:10250"
+          - "<WORKER_IP>:10250"
+    tls_config:
+      ca_file: /etc/prometheus/tls/ca.crt
+      insecure_skip_verify: true
+      cert_file: /etc/prometheus/tls/kubelet/client.crt
+      key_file: /etc/prometheus/tls/kubelet/client.key
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "kubelet"
+
+  # 7. kubelet-cadvisor
+  - job_name: "kubelet-cadvisor"
+    scheme: https
+    metrics_path: /metrics/cadvisor
+    static_configs:
+      - targets:
+          - "<MASTER_IP>:10250"
+          - "<WORKER_IP>:10250"
+          - "<WORKER_IP>:10250"
+          - "<WORKER_IP>:10250"
+    tls_config:
+      ca_file: /etc/prometheus/tls/ca.crt
+      insecure_skip_verify: true
+      cert_file: /etc/prometheus/tls/kubelet/client.crt
+      key_file: /etc/prometheus/tls/kubelet/client.key
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "kubelet-cadvisor"
+
+  # 8. kube-state-metrics
+  - job_name: "kube-state-metrics"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:32296"]
+
+  # 9. Prometheus self
+  - job_name: "prometheus"
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          app: prometheus
+
+  # ============================================================
+  #  Para-Sched components (NodePort on master <MASTER_IP>)
+  # ============================================================
+
+  # Binder — HTTP metrics on NodePort 30080
+  - job_name: "parasched-binder"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30080"]
+        labels:
+          component: "binder"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "parasched-binder"
+
+  # Dispatcher — HTTP metrics on NodePort 30081
+  - job_name: "parasched-dispatcher"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30081"]
+        labels:
+          component: "dispatcher"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "parasched-dispatcher"
+
+  # Scheduler instances 0-19 — HTTPS metrics on NodePort 30090+i
+  # Undeployed instances will be scraped as "down", no side effects.
+  - job_name: "parasched-scheduler-0"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30090"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-0"
+
+  - job_name: "parasched-scheduler-1"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30091"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-1"
+
+  - job_name: "parasched-scheduler-2"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30092"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-2"
+
+  - job_name: "parasched-scheduler-3"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30093"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-3"
+
+  - job_name: "parasched-scheduler-4"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30094"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-4"
+
+  - job_name: "parasched-scheduler-5"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30095"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-5"
+
+  - job_name: "parasched-scheduler-6"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30096"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-6"
+
+  - job_name: "parasched-scheduler-7"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30097"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-7"
+
+  - job_name: "parasched-scheduler-8"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30098"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-8"
+
+  - job_name: "parasched-scheduler-9"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30099"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-9"
+
+  - job_name: "parasched-scheduler-10"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30100"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-10"
+
+  - job_name: "parasched-scheduler-11"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30101"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-11"
+
+  - job_name: "parasched-scheduler-12"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30102"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-12"
+
+  - job_name: "parasched-scheduler-13"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30103"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-13"
+
+  - job_name: "parasched-scheduler-14"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30104"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-14"
+
+  - job_name: "parasched-scheduler-15"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30105"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-15"
+ 
+  - job_name: "parasched-scheduler-16"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30106"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-16"
+
+  - job_name: "parasched-scheduler-17"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30107"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-17"
+
+  - job_name: "parasched-scheduler-18"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30108"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-18"
+
+  - job_name: "parasched-scheduler-19"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      credentials_file: /etc/prometheus/tls/token
+    static_configs:
+      - targets: ["<MASTER_IP>:30109"]
+        labels:
+          component: "scheduler"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "sched-19"
+
+  # ============================================================
+  #  Godel baseline (E1 / E2) — NodePort on master <MASTER_IP>
+  #  All endpoints are plain HTTP on Godel's insecure metrics port.
+  #  The `baseline: godel` label lets PromQL filter E1/E2 series cleanly
+  #  vs para-sched series (which carry no such label, equivalent to "parasched").
+  # ============================================================
+
+  # Binder — :10451 → NodePort 30200
+  - job_name: "godel-binder"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30200"]
+        labels:
+          component: "binder"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-binder"
+
+  # Dispatcher — :10351 → NodePort 30201
+  - job_name: "godel-dispatcher"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30201"]
+        labels:
+          component: "dispatcher"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-dispatcher"
+
+  # Scheduler instances 0-9 — :10251 → NodePort 30210+i
+  # E1 uses only sched-0; sched-1..9 will scrape as "down" in E1.
+  - job_name: "godel-scheduler-0"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30210"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-0"
+
+  - job_name: "godel-scheduler-1"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30211"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-1"
+
+  - job_name: "godel-scheduler-2"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30212"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-2"
+
+  - job_name: "godel-scheduler-3"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30213"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-3"
+
+  - job_name: "godel-scheduler-4"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30214"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-4"
+
+  - job_name: "godel-scheduler-5"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30215"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-5"
+
+  - job_name: "godel-scheduler-6"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30216"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-6"
+
+  - job_name: "godel-scheduler-7"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30217"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-7"
+
+  - job_name: "godel-scheduler-8"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30218"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-8"
+
+  - job_name: "godel-scheduler-9"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["<MASTER_IP>:30219"]
+        labels:
+          component: "scheduler"
+          baseline: "godel"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "godel-sched-9"

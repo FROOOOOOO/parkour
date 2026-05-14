@@ -1,0 +1,56 @@
+# Dispatcher deployment for local Kind cluster (1 replica).
+# Adjust --scheduler-names to match the number of scheduler replicas.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: para-dispatcher
+  namespace: para-system
+  labels:
+    app: para-dispatcher
+    component: para-sched
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: para-dispatcher
+  template:
+    metadata:
+      labels:
+        app: para-dispatcher
+        component: para-sched
+    spec:
+      serviceAccountName: para-scheduler
+      containers:
+        - name: dispatcher
+          image: para-scheduler/dispatcher:latest
+          imagePullPolicy: Never
+          args:
+            - "--scheduler-names=sched-0,sched-1,sched-2"
+            - "--sync-mode=event"
+            - "--workers=2"
+            - "--metrics-addr=:8081"
+            - "--readiness-addr=:8082"
+          ports:
+            - name: metrics
+              containerPort: 8081
+              protocol: TCP
+            - name: ready
+              containerPort: 8082
+              protocol: TCP
+          # readinessProbe gates downstream pods: in event mode /ready
+          # returns 200 immediately; in ParSync mode it gates on
+          # ParSyncConfig + SchedulerAssignment + node label coverage
+          # (see para-scheduler/pkg/dispatcher/readiness.go).
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: ready
+            periodSeconds: 2
+            failureThreshold: 60
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

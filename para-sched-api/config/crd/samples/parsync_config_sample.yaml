@@ -1,0 +1,18 @@
+apiVersion: scheduling.parscheduler.io/v1
+kind: ParSyncConfig
+metadata:
+  name: default
+spec:
+  numPartitions: 4
+  syncPeriod: "3s"
+  stalenessTolerance: "5s"
+  failoverTimeout: "15s"
+  heartbeatInterval: "5s"
+  enableEventDriven: true
+  criticalEventTypes:
+    - "NodeNotReady"
+    - "NodeOutOfDisk"
+    - "HighPriorityPodCreated"
+  rebalancePolicy: "MinimalMove"
+  rebalanceThreshold: 2
+  globalClockSyncEnabled: true

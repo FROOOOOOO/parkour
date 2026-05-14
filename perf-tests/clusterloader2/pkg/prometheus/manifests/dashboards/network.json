@@ -1,0 +1,1668 @@
+{
+    "__inputs": [],
+    "annotations": {
+        "list": []
+    },
+    "description": "",
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "hideControls": false,
+    "id": null,
+    "links": [],
+    "panels": [],
+    "refresh": "10s",
+    "rows": [
+        {
+            "collapse": false,
+            "editable": true,
+            "height": "300px",
+            "panels": [
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": "NetworkProgrammingLatency is defined as the time it took to program the network - from the time  the service or pod has changed to the time the change was propagated and the proper kube-proxy rules were synced. Exported for each endpoints object that were part of the rules sync.",
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 1,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": null,
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "quantile_over_time(0.99, kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.99\"}[24h])",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "{{quantile}}",
+                            "metric": "",
+                            "query": "quantile_over_time(0.99, kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.99\"}[24h])",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "quantile_over_time(0.99, kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.90\"}[24h])",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "{{quantile}}",
+                            "metric": "",
+                            "query": "quantile_over_time(0.99, kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.90\"}[24h])",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "quantile_over_time(0.99, kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.50\"}[24h])",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "{{quantile}}",
+                            "metric": "",
+                            "query": "quantile_over_time(0.99, kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.50\"}[24h])",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "SLI: Network programming latency",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "s",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": "NetworkProgrammingLatency is defined as the time it took to program the network - from the time  the service or pod has changed to the time the change was propagated and the proper kube-proxy rules were synced. Exported for each endpoints object that were part of the rules sync.",
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 2,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": null,
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.99\"}",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "{{quantile}}",
+                            "metric": "",
+                            "query": "kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.99\"}",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.90\"}",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "{{quantile}}",
+                            "metric": "",
+                            "query": "kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.90\"}",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.50\"}",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "{{quantile}}",
+                            "metric": "",
+                            "query": "kubeproxy:kubeproxy_network_programming_duration:histogram_quantile{quantile=\"0.50\"}",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "Network programming latency",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "s",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": "Latency of one round of kube-proxy syncing proxy rules.",
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 3,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": null,
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "histogram_quantile(0.99, sum(rate(kubeproxy_sync_proxy_rules_duration_seconds_bucket[5m])) by (le))",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "0.99",
+                            "metric": "",
+                            "query": "histogram_quantile(0.99, sum(rate(kubeproxy_sync_proxy_rules_duration_seconds_bucket[5m])) by (le))",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "histogram_quantile(0.90, sum(rate(kubeproxy_sync_proxy_rules_duration_seconds_bucket[5m])) by (le))",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "0.90",
+                            "metric": "",
+                            "query": "histogram_quantile(0.90, sum(rate(kubeproxy_sync_proxy_rules_duration_seconds_bucket[5m])) by (le))",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "histogram_quantile(0.50, sum(rate(kubeproxy_sync_proxy_rules_duration_seconds_bucket[5m])) by (le))",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "0.50",
+                            "metric": "",
+                            "query": "histogram_quantile(0.50, sum(rate(kubeproxy_sync_proxy_rules_duration_seconds_bucket[5m])) by (le))",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "kube-proxy: sync rules duation",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "s",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": "Rate of service changes that the proxy has seen over 5m",
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 4,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": null,
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "sum(rate(kubeproxy_sync_proxy_rules_service_changes_total[5m]))",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "5s",
+                            "intervalFactor": 1,
+                            "legendFormat": "rate",
+                            "metric": "",
+                            "query": "sum(rate(kubeproxy_sync_proxy_rules_service_changes_total[5m]))",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "kube-proxy: rate of service changes",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": "Number of pending service changes that have not yet been synced to the proxy.",
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 5,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": null,
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "sum(kubeproxy_sync_proxy_rules_service_changes_pending)",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "5s",
+                            "intervalFactor": 1,
+                            "legendFormat": "pending changes",
+                            "metric": "",
+                            "query": "sum(kubeproxy_sync_proxy_rules_service_changes_pending)",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "kube-proxy: pending service changes",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": "Rate of endpoint changes that the proxy has seen over 5m",
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 6,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": null,
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "sum(rate(kubeproxy_sync_proxy_rules_endpoint_changes_total[5m]))",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "5s",
+                            "intervalFactor": 1,
+                            "legendFormat": "rate",
+                            "metric": "",
+                            "query": "sum(rate(kubeproxy_sync_proxy_rules_endpoint_changes_total[5m]))",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "kube-proxy: rate of endpoint changes",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": "Number of pending endpoint changes that have not yet been synced to the proxy.",
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 7,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": null,
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "sum(kubeproxy_sync_proxy_rules_endpoint_changes_pending)",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "5s",
+                            "intervalFactor": 1,
+                            "legendFormat": "pending changes",
+                            "metric": "",
+                            "query": "sum(kubeproxy_sync_proxy_rules_endpoint_changes_pending)",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "kube-proxy: pending endpoint changes",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                }
+            ],
+            "repeat": null,
+            "showTitle": true,
+            "title": "Network progamming latency"
+        },
+        {
+            "collapse": false,
+            "editable": true,
+            "height": "300px",
+            "panels": [
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": null,
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 8,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "probes:in_cluster_network_latency:histogram_quantile{quantile=\"0.99\"}",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "{{quantile}}",
+                            "metric": "",
+                            "query": "probes:in_cluster_network_latency:histogram_quantile{quantile=\"0.99\"}",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "probes:in_cluster_network_latency:histogram_quantile{quantile=\"0.90\"}",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "{{quantile}}",
+                            "metric": "",
+                            "query": "probes:in_cluster_network_latency:histogram_quantile{quantile=\"0.90\"}",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "probes:in_cluster_network_latency:histogram_quantile{quantile=\"0.50\"}",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "{{quantile}}",
+                            "metric": "",
+                            "query": "probes:in_cluster_network_latency:histogram_quantile{quantile=\"0.50\"}",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "Network latency",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "s",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": null,
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 9,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "sum(rate(probes_in_cluster_network_latency_ping_count{namespace=\"probes\", job=\"ping-client\"}[1m])) by (job)",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "rate",
+                            "metric": "",
+                            "query": "sum(rate(probes_in_cluster_network_latency_ping_count{namespace=\"probes\", job=\"ping-client\"}[1m])) by (job)",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "sum(rate(probes_in_cluster_network_latency_error{namespace=\"probes\", job=\"ping-client\"}[1m])) by (job)",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "error rate",
+                            "metric": "",
+                            "query": "sum(rate(probes_in_cluster_network_latency_error{namespace=\"probes\", job=\"ping-client\"}[1m])) by (job)",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "probes: ping rate",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": null,
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 10,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "count(container_memory_usage_bytes{namespace=\"probes\", container=~\"ping-client|ping-server\"}) by (container, namespace)",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "5s",
+                            "intervalFactor": 1,
+                            "legendFormat": "",
+                            "metric": "",
+                            "query": "count(container_memory_usage_bytes{namespace=\"probes\", container=~\"ping-client|ping-server\"}) by (container, namespace)",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "probe: # running",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "cacheTimeout": null,
+                    "datasource": "$source",
+                    "description": null,
+                    "editable": true,
+                    "error": false,
+                    "fieldConfig": {
+                        "defaults": {
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": []
+                            }
+                        }
+                    },
+                    "fill": 1,
+                    "grid": {
+                        "threshold1": null,
+                        "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                        "threshold2": null,
+                        "threshold2Color": "rgba(234, 112, 112, 0.22)"
+                    },
+                    "gridPos": null,
+                    "height": null,
+                    "hideTimeOverride": false,
+                    "id": 11,
+                    "interval": null,
+                    "isNew": true,
+                    "legend": {
+                        "alignAsTable": false,
+                        "avg": false,
+                        "current": false,
+                        "hideEmpty": false,
+                        "hideZero": false,
+                        "max": false,
+                        "min": false,
+                        "rightSide": false,
+                        "show": true,
+                        "sideWidth": null,
+                        "sort": null,
+                        "sortDesc": false,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "links": [],
+                    "maxDataPoints": 100,
+                    "maxPerRow": null,
+                    "minSpan": null,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true,
+                        "dataLinks": []
+                    },
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "repeat": null,
+                    "repeatDirection": null,
+                    "seriesOverrides": [],
+                    "span": 12,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "datasource": "$source",
+                            "expr": "min(container_memory_usage_bytes{namespace=\"probes\", container=~\"ping-client|ping-server\"}) by (container)",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "min {{container}}",
+                            "metric": "",
+                            "query": "min(container_memory_usage_bytes{namespace=\"probes\", container=~\"ping-client|ping-server\"}) by (container)",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "avg(container_memory_usage_bytes{namespace=\"probes\", container=~\"ping-client|ping-server\"}) by (container)",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "avg {{container}}",
+                            "metric": "",
+                            "query": "avg(container_memory_usage_bytes{namespace=\"probes\", container=~\"ping-client|ping-server\"}) by (container)",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        },
+                        {
+                            "datasource": "$source",
+                            "expr": "max(container_memory_usage_bytes{namespace=\"probes\", container=~\"ping-client|ping-server\"}) by (container)",
+                            "format": "time_series",
+                            "hide": false,
+                            "instant": false,
+                            "interval": "",
+                            "intervalFactor": 2,
+                            "legendFormat": "max {{container}}",
+                            "metric": "",
+                            "query": "max(container_memory_usage_bytes{namespace=\"probes\", container=~\"ping-client|ping-server\"}) by (container)",
+                            "refId": "",
+                            "step": 10,
+                            "target": ""
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "probes: memory usage",
+                    "tooltip": {
+                        "msResolution": true,
+                        "shared": true,
+                        "sort": 2,
+                        "value_type": "cumulative"
+                    },
+                    "transformations": [],
+                    "transparent": false,
+                    "type": "graph",
+                    "xaxis": {
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "decimals": null,
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": 0
+                    }
+                }
+            ],
+            "repeat": null,
+            "showTitle": true,
+            "title": "In-cluster network latency"
+        }
+    ],
+    "schemaVersion": 12,
+    "sharedCrosshair": false,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+        "list": [
+            {
+                "allValue": null,
+                "auto": false,
+                "auto_count": 30,
+                "auto_min": "10s",
+                "current": {
+                    "selected": false,
+                    "tags": [],
+                    "text": null,
+                    "value": null
+                },
+                "datasource": null,
+                "hide": 0,
+                "includeAll": false,
+                "label": null,
+                "multi": false,
+                "name": "source",
+                "options": [],
+                "query": "prometheus",
+                "refresh": 1,
+                "regex": null,
+                "sort": 1,
+                "tagValuesQuery": null,
+                "tagsQuery": null,
+                "type": "datasource",
+                "useTags": false
+            }
+        ]
+    },
+    "time": {
+        "from": "now-30d",
+        "to": "now"
+    },
+    "timepicker": {
+        "hidden": false,
+        "refresh_intervals": [
+            "5s",
+            "10s",
+            "30s",
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "2h",
+            "1d"
+        ],
+        "time_options": [
+            "5m",
+            "15m",
+            "1h",
+            "6h",
+            "12h",
+            "24h",
+            "2d",
+            "7d",
+            "30d"
+        ]
+    },
+    "timezone": "utc",
+    "title": "Network",
+    "uid": null,
+    "version": 0
+}

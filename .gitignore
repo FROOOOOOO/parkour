@@ -1,0 +1,200 @@
+# =============================================================================
+# Go
+# =============================================================================
+
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Coverage output
+*.out
+
+# Build output directories
+/bin/
+/output*/
+/_output*/
+/_output
+hack/tools/bin
+
+# Bazel
+/bazel-*
+
+# Generated vendor diff
+vendordiff.patch
+
+# Phony test files used as part of coverage generation
+zz_generated_*_test.go
+
+# go workspace
+go.work
+go.work.sum
+
+# =============================================================================
+# Python
+# =============================================================================
+
+*.pyc
+*/__pycache__/
+
+# =============================================================================
+# Kubernetes / Cluster
+# =============================================================================
+
+# Secrets and kubeconfig
+*-secret.yaml
+kubeconfig
+.kubeconfig
+
+# Clusterloader2 generated files
+cl2-metadata.json
+junit.xml
+/junit*.xml
+generatedConfig_*.yaml
+
+# perf-tests binaries
+perf-tests/build
+perf-tests/network/launch
+perf-tests/clusterloader2/junit.xml
+perf-tests/clusterloader2/clusterloader
+perf-tests/dns/out
+perf-tests/perfdash/perfdash
+
+# etcd installed by hack/install-etcd.sh
+/third_party/etcd*
+/default.etcd
+
+# Compiled binaries in third_party
+/third_party/pkg
+
+# Local cluster env variables
+/cluster/env.sh
+
+# CoreOS
+/cluster/libvirt-coreos/coreos_*.img
+
+# Downloaded Kubernetes release
+/kubernetes/
+kubernetes.tar.gz
+
+# direnv
+.envrc
+
+# Vagrant
+.vagrant
+network_closure.sh
+
+# Mercurial
+**/.hg
+**/.hg*
+
+# =============================================================================
+# CI / Build metadata
+# =============================================================================
+
+/_tmp/
+/doc_tmp/
+/_artifacts/
+/_gopath/
+/.config/gcloud*/
+/.gsutil/
+/.make/
+/hack/.test-cmd-auth
+
+# cscope
+cscope.*
+
+# Tags
+.tags*
+
+# Version file for dockerized build
+.dockerized-kube-version-defs
+
+# =============================================================================
+# Web UI
+# =============================================================================
+
+/www/master/node_modules/
+/www/master/npm-debug.log
+/www/master/shared/config/development.json
+/www/test_out
+
+# Just-in-time generated data
+/test/e2e/generated/bindata.go
+
+# =============================================================================
+# Project binaries
+# =============================================================================
+*/_output
+
+bin/scheduler
+bin/dispatcher
+bin/binder
+bin/para-sched-api
+
+# Experimental results
+figs/
+experiments/results/
+simulation/data/
+paper_data*.csv
+paper_data*.json
+
+# =============================================================================
+# IDE
+# =============================================================================
+
+# JetBrains / GoLand / IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.classpath
+.project
+.settings/**
+
+# =============================================================================
+# Editor temp files
+# =============================================================================
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Vim
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+
+# Vim swap files
+*.swp
+*.swo
+
+# =============================================================================
+# OS
+# =============================================================================
+
+# macOS
+.DS_Store
+._*
+
+# Windows
+Thumbs.db
+
+# =============================================================================
+# Misc
+# =============================================================================
+
+*.log
+*.tmp
+.claude/*

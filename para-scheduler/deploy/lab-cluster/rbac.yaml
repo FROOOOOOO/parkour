@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: para-scheduler
+  namespace: para-system
+---
+# Core permissions for para-sched components (Binder, Dispatcher, CRDs).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: para-scheduler
+rules:
+  # --- Pods: dispatch, bind, status update ---
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/binding"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["pods/status"]
+    verbs: ["patch", "update"]
+  # --- Nodes ---
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "patch"]
+  # --- ConfigMaps (ParSync snapshots + scheduler config) ---
+  # `delete` is required by SnapshotPublisher.cleanupStaleChunks (P2):
+  # when a partition shrinks below a chunk boundary, the now-stale tail
+  # chunks are deleted so the Scheduler's label watch doesn't merge them.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+  # --- Events (core API + events.k8s.io API group) ---
+  - apiGroups: ["", "events.k8s.io"]
+    resources: ["events"]
+    verbs: ["create", "patch", "update"]
+  # --- Namespaces (kube-scheduler informer) ---
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
+  # --- Services, Endpoints (kube-scheduler informer) ---
+  - apiGroups: [""]
+    resources: ["services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  # --- PVs, PVCs (kube-scheduler volume binding) ---
+  - apiGroups: [""]
+    resources: ["persistentvolumes", "persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+  # --- ReplicationControllers (kube-scheduler informer) ---
+  - apiGroups: [""]
+    resources: ["replicationcontrollers"]
+    verbs: ["get", "list", "watch"]
+  # --- ReplicaSets, StatefulSets (kube-scheduler informer) ---
+  - apiGroups: ["apps"]
+    resources: ["replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  # --- PodDisruptionBudgets (kube-scheduler informer) ---
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch"]
+  # --- StorageClasses, CSI (kube-scheduler volume/topology) ---
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses", "csinodes", "csistoragecapacities", "csidrivers"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch"]
+  # --- Scheduling (priority classes) ---
+  - apiGroups: ["scheduling.k8s.io"]
+    resources: ["priorityclasses"]
+    verbs: ["get", "list", "watch"]
+  # --- Coordination (leader election) ---
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update"]
+  # --- Para-sched CRDs ---
+  - apiGroups: ["scheduling.parscheduler.io"]
+    resources: ["parsyncconfigs", "schedulerassignments", "adoptionstats"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["scheduling.parscheduler.io"]
+    resources: ["parsyncconfigs/status", "schedulerassignments/status", "adoptionstats/status"]
+    verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: para-scheduler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: para-scheduler
+subjects:
+  - kind: ServiceAccount
+    name: para-scheduler
+    namespace: para-system
+---
+# Bind system:auth-delegator so kube-scheduler can serve /metrics with
+# token authentication (TokenReview API access).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: para-scheduler-auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: para-scheduler
+    namespace: para-system

@@ -1,0 +1,46 @@
+build
+
+# Binaries
+network/launch
+
+# OSX leaves these everywhere on SMB shares
+._*
+
+# OSX trash
+.DS_Store
+
+# Eclipse files
+.classpath
+.project
+.settings/**
+
+# Emacs save files
+*~
+\#*\#
+.\#*
+
+# Vim-related files
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+
+clusterloader2/junit.xml
+clusterloader2/clusterloader
+
+# Python generated files
+*.pyc
+
+# Vscode files
+.vscode
+*.code-workspace
+
+# GoLand files
+.idea
+
+
+# Clusterloader2 generated files
+cl2-metadata.json
+junit.xml
+generatedConfig_*.yaml

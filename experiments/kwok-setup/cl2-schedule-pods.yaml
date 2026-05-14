@@ -1,0 +1,308 @@
+# ASSUMPTIONS:
+# - Underlying cluster should have 100+ nodes.
+# - Number of nodes should be divisible by NODES_PER_NAMESPACE (default 100).
+
+#Constants
+{{$DENSITY_RESOURCE_CONSTRAINTS_FILE := DefaultParam .DENSITY_RESOURCE_CONSTRAINTS_FILE ""}}
+# Cater for the case where the number of nodes is less than nodes per namespace. See https://github.com/kubernetes/perf-tests/issues/887
+# 100 nodes per namespace; pods per node controlled by PODS_PER_NODE
+{{$NODES_PER_NAMESPACE := MinInt .Nodes (DefaultParam .NODES_PER_NAMESPACE 100)}}
+{{$PODS_PER_NODE := DefaultParam .PODS_PER_NODE 29}}
+# Expected scheduling throughput used to calculate the soft timeout.
+# Low-contention (29 pods/node): use 100 pods/s (kube-scheduler baseline).
+# High-contention (3 pods/node):  use 20 pods/s — vanilla parallel scheduler has high
+# conflict rate in this scenario, so actual throughput can be much lower than default.
+# Pass via --testoverrides: DENSITY_TEST_THROUGHPUT: 20
+{{$DENSITY_TEST_THROUGHPUT := DefaultParam .DENSITY_TEST_THROUGHPUT 100}}
+{{$SCHEDULER_THROUGHPUT_THRESHOLD := DefaultParam .CL2_SCHEDULER_THROUGHPUT_THRESHOLD 0}}
+# Pod resource requests — parameterized for Low-contention (1CPU/8Gi) vs High-contention (8CPU/64Gi)
+{{$SATURATION_POD_CPU := DefaultParam .SATURATION_POD_CPU "1000m"}}
+{{$SATURATION_POD_MEMORY := DefaultParam .SATURATION_POD_MEMORY "8Gi"}}
+{{$LATENCY_POD_CPU := DefaultParam .LATENCY_POD_CPU 1000}}
+{{$LATENCY_POD_MEMORY := DefaultParam .LATENCY_POD_MEMORY 8192}}
+{{$MIN_LATENCY_PODS := DefaultParam .MIN_LATENCY_PODS 100}}
+{{$MIN_SATURATION_PODS_TIMEOUT := 0}}  # relaxed saturation pod SLO — no extra wait padding
+{{$ENABLE_CHAOSMONKEY := DefaultParam .ENABLE_CHAOSMONKEY false}}
+{{$ENABLE_SYSTEM_POD_METRICS:= DefaultParam .ENABLE_SYSTEM_POD_METRICS true}}
+{{$ENABLE_CLUSTER_OOMS_TRACKER := DefaultParam .CL2_ENABLE_CLUSTER_OOMS_TRACKER true}}
+{{$CLUSTER_OOMS_IGNORED_PROCESSES := DefaultParam .CL2_CLUSTER_OOMS_IGNORED_PROCESSES ""}}
+{{$USE_SIMPLE_LATENCY_QUERY := DefaultParam .USE_SIMPLE_LATENCY_QUERY false}}
+{{$ENABLE_RESTART_COUNT_CHECK := DefaultParam .ENABLE_RESTART_COUNT_CHECK true}}
+{{$RESTART_COUNT_THRESHOLD_OVERRIDES:= DefaultParam .RESTART_COUNT_THRESHOLD_OVERRIDES ""}}
+{{$ALLOWED_SLOW_API_CALLS := DefaultParam .CL2_ALLOWED_SLOW_API_CALLS 0}}
+{{$ENABLE_VIOLATIONS_FOR_SCHEDULING_THROUGHPUT := DefaultParam .CL2_ENABLE_VIOLATIONS_FOR_SCHEDULING_THROUGHPUT true}}
+#Variables
+{{$namespaces := DivideInt .Nodes $NODES_PER_NAMESPACE}}
+{{$podsPerNamespace := MultiplyInt $PODS_PER_NODE $NODES_PER_NAMESPACE}}
+{{$totalPods := MultiplyInt $podsPerNamespace $namespaces}}
+{{$latencyReplicas := DivideInt (MaxInt $MIN_LATENCY_PODS .Nodes) $namespaces}}  # max(MIN_LATENCY_PODS, nodes) / ns latency pods per namespace — at least one per node on average
+{{$totalLatencyPods := MultiplyInt $namespaces $latencyReplicas}}
+{{$saturationDeploymentTimeout := DivideFloat $totalPods $DENSITY_TEST_THROUGHPUT | AddInt $MIN_SATURATION_PODS_TIMEOUT}}
+# Hard timeout: clamp between [600s, 3600s].
+# Lower bound 600s: prevents premature failure in small High-contention runs
+# (e.g. 2000n × 3 pods/node = 6000 pods; at 20 pods/s soft-timeout is only 300s,
+# but vanilla parallel scheduling under high conflict can be slower).
+# Upper bound 3600s: keeps single experiment wall-time reasonable.
+{{$saturationDeploymentHardTimeout := MaxInt 600 (MinInt $saturationDeploymentTimeout 3600)}}
+
+{{$saturationDeploymentSpec := DefaultParam .SATURATION_DEPLOYMENT_SPEC "kwok-deployment.yaml"}}
+{{$latencyDeploymentSpec := DefaultParam .LATENCY_DEPLOYMENT_SPEC "kwok-deployment.yaml"}}
+
+# Probe measurements shared parameter
+{{$PROBE_MEASUREMENTS_CHECK_PROBES_READY_TIMEOUT := DefaultParam .CL2_PROBE_MEASUREMENTS_CHECK_PROBES_READY_TIMEOUT "15m"}}
+
+name: density
+namespace:
+  number: {{$namespaces}}
+tuningSets:
+- name: Uniform5qps
+  qpsLoad:
+    # 5 objects/s — each object is a Deployment
+    qps: 5
+- name: Uniform50qps
+  qpsLoad:
+    qps: 50
+- name: Uniform100qps
+  qpsLoad:
+    qps: 100
+{{if $ENABLE_CHAOSMONKEY}}
+chaosMonkey:
+  nodeFailure:
+    failureRate: 0.01
+    interval: 1m
+    jitterFactor: 10.0
+    simulatedDowntime: 10m
+{{end}}
+steps:
+- name: Starting measurements
+  # Start API call latency monitoring
+  measurements:
+  - Identifier: APIResponsivenessPrometheus
+    Method: APIResponsivenessPrometheus
+    Params:
+      action: start
+  - Identifier: APIResponsivenessPrometheusSimple
+    Method: APIResponsivenessPrometheus
+    Params:
+      action: start
+  # TODO(oxddr): figure out how many probers to run in function of cluster
+  # InClusterNetworkLatency and DnsLookupLatency are unsupported in kubemark clusters — disabled
+  # - Identifier: InClusterNetworkLatency
+  #   Method: InClusterNetworkLatency
+  #   Params:
+  #     action: start
+  #     checkProbesReadyTimeout: {{$PROBE_MEASUREMENTS_CHECK_PROBES_READY_TIMEOUT}}
+  #     replicasPerProbe: {{AddInt 2 (DivideInt .Nodes 100)}}
+  # - Identifier: DnsLookupLatency
+  #   Method: DnsLookupLatency
+  #   Params:
+  #     action: start
+  #     checkProbesReadyTimeout: {{$PROBE_MEASUREMENTS_CHECK_PROBES_READY_TIMEOUT}}
+  #     replicasPerProbe: {{AddInt 2 (DivideInt .Nodes 100)}}
+       
+
+  #- Identifier: TestMetrics
+  #  Method: TestMetrics
+  #  Params:
+  #    action: start
+  #    resourceConstraints: {{$DENSITY_RESOURCE_CONSTRAINTS_FILE}}
+  #    systemPodMetricsEnabled: {{$ENABLE_SYSTEM_POD_METRICS}}
+  #    clusterOOMsTrackerEnabled: {{$ENABLE_CLUSTER_OOMS_TRACKER}}
+  #    clusterOOMsIgnoredProcesses: {{$CLUSTER_OOMS_IGNORED_PROCESSES}}
+  #    restartCountThresholdOverrides: {{YamlQuote $RESTART_COUNT_THRESHOLD_OVERRIDES 4}}
+  #    enableRestartCountCheck: {{$ENABLE_RESTART_COUNT_CHECK}}
+
+- name: Starting saturation pod measurements
+  # Start pod startup latency monitoring
+  measurements:
+  - Identifier: SaturationPodStartupLatency
+    Method: PodStartupLatency
+    Params:
+      action: start
+      labelSelector: group = saturation
+      threshold: {{$saturationDeploymentTimeout}}s
+  - Identifier: WaitForRunningSaturationDeployments
+    Method: WaitForControlledPodsRunning
+    Params:
+      action: start
+      apiVersion: apps/v1
+      kind: Deployment
+      labelSelector: group = saturation
+      operationTimeout: {{$saturationDeploymentHardTimeout}}s
+  - Identifier: SchedulingThroughput
+    Method: SchedulingThroughput
+    Params:
+      action: start
+      labelSelector: group = saturation
+
+# Create saturation pods: PODS_PER_NODE × num_nodes total
+- name: Creating saturation pods
+  phases:
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+    # number of objects (Deployments) to create per namespace
+    replicasPerNamespace: 1
+    tuningSet: Uniform5qps
+    objectBundle:
+    - basename: saturation-deployment
+      objectTemplatePath: {{$saturationDeploymentSpec}}
+      # Template fill: one Deployment per namespace, with podsPerNamespace replicas each
+      templateFillMap:
+        Replicas: {{$podsPerNamespace}}
+        Group: saturation
+        CpuRequest: {{$SATURATION_POD_CPU}}
+        MemoryRequest: {{$SATURATION_POD_MEMORY}}
+
+# Wait for all saturation pods to reach Running state
+- name: Waiting for saturation pods to be running
+  measurements:
+  - Identifier: WaitForRunningSaturationDeployments
+    Method: WaitForControlledPodsRunning
+    Params:
+      action: gather
+
+- name: Collecting saturation pod measurements
+  measurements:
+  # Collect saturation pod startup latency
+  - Identifier: SaturationPodStartupLatency
+    Method: PodStartupLatency
+    Params:
+      action: gather
+  # Collect scheduling throughput (pods/s); threshold=0 by default so no violation is triggered
+  - Identifier: SchedulingThroughput
+    Method: SchedulingThroughput
+    Params:
+      action: gather
+      enableViolations: {{$ENABLE_VIOLATIONS_FOR_SCHEDULING_THROUGHPUT}}
+      threshold: {{$SCHEDULER_THROUGHPUT_THRESHOLD}}
+
+# After saturation, create latency pods to measure scheduling latency under a loaded cluster
+# Start latency pod startup latency monitoring
+- name: Starting latency pod measurements
+  measurements:
+  - Identifier: PodStartupLatency
+    Method: PodStartupLatency
+    Params:
+      action: start
+      labelSelector: group = latency
+  - Identifier: WaitForRunningLatencyDeployments
+    Method: WaitForControlledPodsRunning
+    Params:
+      action: start
+      apiVersion: apps/v1
+      kind: Deployment
+      labelSelector: group = latency
+      operationTimeout: 15m
+
+# Create latency pods
+# Use higher QPS than saturation: latency creates many single-pod deployments
+# (e.g. 5000 deployments at 5000n), so 5qps would take 1000s > 15min timeout.
+- name: Creating latency pods
+  phases:
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+    replicasPerNamespace: {{$latencyReplicas}}
+    tuningSet: Uniform50qps
+    objectBundle:
+    - basename: latency-deployment
+      objectTemplatePath: {{$latencyDeploymentSpec}}
+      templateFillMap:
+        Replicas: 1
+        Group: latency
+        CpuRequest: {{$LATENCY_POD_CPU}}m
+        MemoryRequest: {{$LATENCY_POD_MEMORY}}M
+
+# Wait for latency pods to reach Running state
+- name: Waiting for latency pods to be running
+  measurements:
+  - Identifier: WaitForRunningLatencyDeployments
+    Method: WaitForControlledPodsRunning
+    Params:
+      action: gather
+
+# Delete latency pods
+- name: Deleting latency pods
+  phases:
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+    replicasPerNamespace: 0
+    tuningSet: Uniform100qps
+    objectBundle:
+    - basename: latency-deployment
+      objectTemplatePath: {{$latencyDeploymentSpec}}
+
+# Wait for latency pod deletion to complete
+- name: Waiting for latency pods to be deleted
+  measurements:
+  - Identifier: WaitForRunningLatencyDeployments
+    Method: WaitForControlledPodsRunning
+    Params:
+      action: gather
+
+# Collect latency pod startup latency
+- name: Collecting pod startup latency
+  measurements:
+  - Identifier: PodStartupLatency
+    Method: PodStartupLatency
+    Params:
+      action: gather
+
+# Delete saturation pods
+- name: Deleting saturation pods
+  phases:
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+    replicasPerNamespace: 0
+    tuningSet: Uniform5qps
+    objectBundle:
+    - basename: saturation-deployment
+      objectTemplatePath: {{$saturationDeploymentSpec}}
+
+# Wait for saturation pod deletion to complete
+- name: Waiting for saturation pods to be deleted
+  measurements:
+  - Identifier: WaitForRunningSaturationDeployments
+    Method: WaitForControlledPodsRunning
+    Params:
+      action: gather
+
+- name: Collecting measurements
+  measurements:
+  # Histogram-based API responsiveness (faster, approximate)
+  - Identifier: APIResponsivenessPrometheusSimple
+    Method: APIResponsivenessPrometheus
+    Params:
+      action: gather
+      enableViolations: true
+      useSimpleLatencyQuery: true
+      summaryName: APIResponsivenessPrometheus_simple
+      allowedSlowCalls: {{$ALLOWED_SLOW_API_CALLS}}
+  # Summary-based API responsiveness — more accurate; preferred reference
+  {{if not $USE_SIMPLE_LATENCY_QUERY}}
+  - Identifier: APIResponsivenessPrometheus
+    Method: APIResponsivenessPrometheus
+    Params:
+      action: gather
+      allowedSlowCalls: {{$ALLOWED_SLOW_API_CALLS}}
+  {{end}}
+  # Disabled — not applicable to this cluster setup
+  # - Identifier: InClusterNetworkLatency
+  #   Method: InClusterNetworkLatency
+  #   Params:
+  #     action: gather
+  # - Identifier: DnsLookupLatency
+  #   Method: DnsLookupLatency
+  #   Params:
+  #     action: gather
+  #- Identifier: TestMetrics
+  #  Method: TestMetrics
+  #  Params:
+  #    action: gather
+  #    systemPodMetricsEnabled: {{$ENABLE_SYSTEM_POD_METRICS}}
+  #    clusterOOMsTrackerEnabled: {{$ENABLE_CLUSTER_OOMS_TRACKER}}
+  #    restartCountThresholdOverrides: {{YamlQuote $RESTART_COUNT_THRESHOLD_OVERRIDES 4}}
+  #    enableRestartCountCheck: {{$ENABLE_RESTART_COUNT_CHECK}}

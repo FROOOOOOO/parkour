@@ -1,0 +1,50 @@
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: v1.33.5  # newest at 250930
+imageRepository: registry.k8s.io
+certificatesDir: /etc/kubernetes/pki
+clusterName: kubernetes
+apiServer:
+  timeoutForControlPlane: 4m0s
+  extraArgs:
+  # - name: "event-ttl"
+  #   value: "10m"
+  - name: "etcd-servers-overrides"
+    value: "/events#http://localhost:2479"
+  - name: "max-mutating-requests-inflight"
+    value: "10000"
+  - name: "max-requests-inflight"
+    value: "20000"
+controllerManager:
+  extraArgs:
+  - name: "allocate-node-cidrs"
+    value: "true"
+  - name: "cluster-cidr"
+    value: "10.244.0.0/16"
+  - name: "kube-api-qps"
+    value: "10000"
+  - name: "kube-api-burst"
+    value: "10000"
+  - name: "concurrent-deployment-syncs"
+    value: "2000"
+  - name: "concurrent-namespace-syncs"
+    value: "200"
+  - name: "concurrent-replicaset-syncs"
+    value: "4000"
+scheduler:
+  extraArgs:
+  - name: "kube-api-qps"
+    value: "10000"
+  - name: "kube-api-burst"
+    value: "10000"
+etcd:
+  local:
+    dataDir: /var/lib/etcd
+    extraArgs:
+    - name: "quota-backend-bytes"
+      value: "85899345920"
+dns: {}
+networking:
+  dnsDomain: cluster.local
+  serviceSubnet: 10.96.0.0/12
+controlPlaneEndpoint: <MASTER_IP>:6443

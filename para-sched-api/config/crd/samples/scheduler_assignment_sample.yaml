@@ -1,0 +1,27 @@
+apiVersion: scheduling.parscheduler.io/v1
+kind: SchedulerAssignment
+metadata:
+  name: scheduler-0
+spec:
+  schedulerName: scheduler-0
+  schedulerId: 0
+  assignedPartitions: [0, 3]
+  syncSlots:
+    - slotIndex: 0
+      partitionId: 0
+      offsetMillis: 0
+    - slotIndex: 1
+      partitionId: 3
+      offsetMillis: 1000
+  parSyncConfig:
+    name: default
+  multiCandidateConfig:
+    defaultK: 3
+    minCandidates: 1
+    maxCandidates: 10
+    scoreThreshold: 85
+    enableProbabilityRanking: true
+    enableDynamicK: true
+    highPriorityExtraK: 2
+    selectionStrategy: "QualityFirst"
+  configGeneration: 1

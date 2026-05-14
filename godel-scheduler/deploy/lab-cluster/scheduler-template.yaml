@@ -1,0 +1,85 @@
+# Template for a single Godel scheduler instance (E1/E2 baseline lab cluster).
+# Variables (substituted by setup.sh):
+#   ${SCHED_INDEX}  - instance index (0, 1, 2, ...)
+#
+# Per-instance --godel-scheduler-name is REQUIRED because Godel uses this name
+# to register an entry in the `schedulers.scheduling.godel.kubewharf.io` CRD.
+# Sharing a single name across N replicas would collapse them into one CRD
+# entry and the dispatcher's scheduler-maintainer would only ever see 1
+# scheduler — defeating the parallel-scheduling baseline.
+#
+# --scheduler-name (default "godel-scheduler") is shared across all instances:
+# it is the value Pods set in `spec.schedulerName` to opt into Godel.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: godel-scheduler-${SCHED_INDEX}
+  namespace: godel-system
+  labels:
+    app: godel-scheduler
+    instance: godel-sched-${SCHED_INDEX}
+    component: godel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: godel-scheduler
+      instance: godel-sched-${SCHED_INDEX}
+  template:
+    metadata:
+      labels:
+        app: godel-scheduler
+        instance: godel-sched-${SCHED_INDEX}
+        component: godel
+    spec:
+      serviceAccountName: godel
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      containers:
+        - name: scheduler
+          image: godel-local:latest
+          imagePullPolicy: Never
+          command: ["/usr/local/bin/scheduler"]
+          args:
+            - "--leader-elect=false"
+            - "--tracer=noop"
+            - "--v=4"
+            - "--disable-preemption=false"
+            - "--config=/config/scheduler.config"
+            - "--godel-scheduler-name=godel-sched-${SCHED_INDEX}"
+            - "--reservation-ttl=60"
+            - "--feature-gates=ResourceReservation=true"
+          env:
+            - name: TZ
+              value: UTC
+          ports:
+            - name: metrics
+              containerPort: 10251
+              protocol: TCP
+          volumeMounts:
+            - name: scheduler-config
+              mountPath: /config
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              # Match para-scheduler per-instance CPU limit for fair comparison
+              # at N=10 (total 30 CPU on B node's 48C96T, leaves headroom for
+              # binder/dispatcher/apiserver). Memory intentionally unbounded.
+              cpu: 3000m
+      volumes:
+        - name: scheduler-config
+          configMap:
+            name: godel-scheduler-config
+            items:
+              - key: godel-scheduler-config
+                path: scheduler.config

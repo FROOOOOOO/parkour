@@ -1,0 +1,65 @@
+# Dispatcher deployment for lab cluster (1master+3worker, K8s v1.33.5).
+# Variables (substituted by setup.sh):
+#   ${SCHED_NAMES}  - comma-separated scheduler names (e.g. "sched-0,sched-1,...,sched-15")
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: para-dispatcher
+  namespace: para-system
+  labels:
+    app: para-dispatcher
+    component: para-sched
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: para-dispatcher
+  template:
+    metadata:
+      labels:
+        app: para-dispatcher
+        component: para-sched
+    spec:
+      serviceAccountName: para-scheduler
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      containers:
+        - name: dispatcher
+          image: para-scheduler/dispatcher:latest
+          imagePullPolicy: Never
+          args:
+            - "--v=4"
+            - "--scheduler-names=${SCHED_NAMES}"
+            - "--sync-mode=event"
+            - "--workers=4"
+            - "--metrics-addr=:8081"
+            - "--kube-api-qps=10000"
+            - "--kube-api-burst=10000"
+          env:
+            - name: TZ
+              value: UTC
+          ports:
+            - name: metrics
+              containerPort: 8081
+              protocol: TCP
+            - name: ready
+              containerPort: 8082
+              protocol: TCP
+          # readinessProbe surfaces the same /ready endpoint that
+          # Scheduler/Binder initContainers poll. K8s flips the Pod's
+          # Ready condition based on this, so kubectl wait
+          # --for=condition=ready works as a barrier in run-experiment.sh.
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: ready
+            periodSeconds: 2
+            failureThreshold: 60
+          resources:
+            requests:
+              cpu: 500m
+              memory: 256Mi

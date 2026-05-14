@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dispatcher
+  namespace: godel-system
+  labels:
+    component: dispatcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: godel-dispatcher
+  template:
+    metadata:
+      labels:
+        app: godel-dispatcher
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      serviceAccountName: godel
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: dispatcher
+          image: godel-local:latest
+          imagePullPolicy: Never
+          command: ["/usr/local/bin/dispatcher"]
+          args:
+            - "--leader-elect=false"
+            - "--tracer=noop"
+            - "--v=5"
+          resources:
+            limits:
+              cpu: "0.5"
+              memory: 500Mi
+            requests:
+              cpu: "0.5"
+              memory: 500Mi

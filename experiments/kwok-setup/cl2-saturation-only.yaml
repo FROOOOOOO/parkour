@@ -1,0 +1,146 @@
+# CL2 config for High-contention (HC-1) scenario: saturation-only, no latency phase.
+#
+# HC-1: each pod requests nearly an entire node (24 CPU / 192 Gi on a 32 CPU / 256 Gi node),
+# so pods_per_node = 1 and total_pods = num_nodes.  This directly corresponds to the
+# simulation's pod_per_node=1 baseline where conflict rate is highest (~28.7%).
+#
+# Key differences from cl2-schedule-pods.yaml:
+#   1. No latency pod phase (unnecessary when pods_per_node=1 — nodes are fully saturated)
+#   2. High deployment creation QPS (500) to inject all pods as a burst, ensuring the
+#      scheduling pipeline is immediately saturated (>> 250 pods/s single-scheduler throughput)
+#   3. Simplified: saturation measurement only
+
+#Constants
+{{$NODES_PER_NAMESPACE := MinInt .Nodes (DefaultParam .NODES_PER_NAMESPACE 100)}}
+{{$PODS_PER_NODE := DefaultParam .PODS_PER_NODE 1}}
+{{$DENSITY_TEST_THROUGHPUT := DefaultParam .DENSITY_TEST_THROUGHPUT 10}}
+{{$SCHEDULER_THROUGHPUT_THRESHOLD := DefaultParam .CL2_SCHEDULER_THROUGHPUT_THRESHOLD 0}}
+{{$SATURATION_POD_CPU := DefaultParam .SATURATION_POD_CPU "24000m"}}
+{{$SATURATION_POD_MEMORY := DefaultParam .SATURATION_POD_MEMORY "192Gi"}}
+{{$ENABLE_VIOLATIONS_FOR_SCHEDULING_THROUGHPUT := DefaultParam .CL2_ENABLE_VIOLATIONS_FOR_SCHEDULING_THROUGHPUT true}}
+
+#Variables
+{{$namespaces := DivideInt .Nodes $NODES_PER_NAMESPACE}}
+{{$podsPerNamespace := MultiplyInt $PODS_PER_NODE $NODES_PER_NAMESPACE}}
+{{$totalPods := MultiplyInt $podsPerNamespace $namespaces}}
+{{$saturationDeploymentTimeout := DivideFloat $totalPods $DENSITY_TEST_THROUGHPUT}}
+# Hard timeout: clamp between [600s, 3600s].
+{{$saturationDeploymentHardTimeout := MaxInt 600 (MinInt $saturationDeploymentTimeout 3600)}}
+
+{{$saturationDeploymentSpec := DefaultParam .SATURATION_DEPLOYMENT_SPEC "kwok-deployment.yaml"}}
+
+name: hc1-saturation
+namespace:
+  number: {{$namespaces}}
+tuningSets:
+# 500 deployments/s — burst-inject all saturation pods so the scheduling queue is
+# immediately full, maximising parallel scheduler contention.
+- name: BurstQps
+  qpsLoad:
+    qps: 500
+steps:
+- name: Starting measurements
+  measurements:
+  - Identifier: APIResponsivenessPrometheus
+    Method: APIResponsivenessPrometheus
+    Params:
+      action: start
+  - Identifier: APIResponsivenessPrometheusSimple
+    Method: APIResponsivenessPrometheus
+    Params:
+      action: start
+
+- name: Starting saturation pod measurements
+  measurements:
+  - Identifier: SaturationPodStartupLatency
+    Method: PodStartupLatency
+    Params:
+      action: start
+      labelSelector: group = saturation
+      threshold: {{$saturationDeploymentTimeout}}s
+  - Identifier: WaitForRunningSaturationDeployments
+    Method: WaitForControlledPodsRunning
+    Params:
+      action: start
+      apiVersion: apps/v1
+      kind: Deployment
+      labelSelector: group = saturation
+      operationTimeout: {{$saturationDeploymentHardTimeout}}s
+  - Identifier: SchedulingThroughput
+    Method: SchedulingThroughput
+    Params:
+      action: start
+      labelSelector: group = saturation
+
+# Create saturation pods: total_pods = nodes × pods_per_node
+# With BurstQps (500 deployments/s), all deployments are created almost instantly.
+- name: Creating saturation pods
+  phases:
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+    replicasPerNamespace: 1
+    tuningSet: BurstQps
+    objectBundle:
+    - basename: saturation-deployment
+      objectTemplatePath: {{$saturationDeploymentSpec}}
+      templateFillMap:
+        Replicas: {{$podsPerNamespace}}
+        Group: saturation
+        CpuRequest: {{$SATURATION_POD_CPU}}
+        MemoryRequest: {{$SATURATION_POD_MEMORY}}
+
+# Wait for all saturation pods to be running
+- name: Waiting for saturation pods to be running
+  measurements:
+  - Identifier: WaitForRunningSaturationDeployments
+    Method: WaitForControlledPodsRunning
+    Params:
+      action: gather
+
+- name: Collecting saturation pod measurements
+  measurements:
+  - Identifier: SaturationPodStartupLatency
+    Method: PodStartupLatency
+    Params:
+      action: gather
+  - Identifier: SchedulingThroughput
+    Method: SchedulingThroughput
+    Params:
+      action: gather
+      enableViolations: {{$ENABLE_VIOLATIONS_FOR_SCHEDULING_THROUGHPUT}}
+      threshold: {{$SCHEDULER_THROUGHPUT_THRESHOLD}}
+
+# Delete saturation pods
+- name: Deleting saturation pods
+  phases:
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+    replicasPerNamespace: 0
+    tuningSet: BurstQps
+    objectBundle:
+    - basename: saturation-deployment
+      objectTemplatePath: {{$saturationDeploymentSpec}}
+
+# Wait for deletion
+- name: Waiting for saturation pods to be deleted
+  measurements:
+  - Identifier: WaitForRunningSaturationDeployments
+    Method: WaitForControlledPodsRunning
+    Params:
+      action: gather
+
+- name: Collecting measurements
+  measurements:
+  - Identifier: APIResponsivenessPrometheusSimple
+    Method: APIResponsivenessPrometheus
+    Params:
+      action: gather
+      enableViolations: true
+      useSimpleLatencyQuery: true
+      summaryName: APIResponsivenessPrometheus_simple
+  - Identifier: APIResponsivenessPrometheus
+    Method: APIResponsivenessPrometheus
+    Params:
+      action: gather

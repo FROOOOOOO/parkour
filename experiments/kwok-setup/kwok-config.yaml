@@ -1,0 +1,34 @@
+# KWOK performance tuning for large-scale simulation.
+#
+# Key bottleneck: pod Pending→Running transition rate.
+# Default parallelism is low; increasing it allows each KWOK shard
+# to handle more pods concurrently.
+#
+# Shared by all 20 KWOK shards via --config flag.
+apiVersion: config.kwok.x-k8s.io/v1alpha1
+kind: KwokConfiguration
+options:
+  # Pod status transition parallelism (Pending → Running).
+  # This is the most critical parameter — directly controls how many pods
+  # a single shard can transition per unit time.
+  podPlayStageParallelism: 100
+
+  # Node status transition parallelism (only matters during node creation).
+  nodePlayStageParallelism: 20
+
+  # Node lease renewal interval (seconds). Higher = less apiserver load.
+  # Already set via --node-lease-duration-seconds flag, but also here for clarity.
+  nodeLeaseDurationSeconds: 100
+
+  # Node lease renewal parallelism.
+  nodeLeaseParallelism: 10
+
+  # Pod-on-node sync worker parallelism.
+  podsOnNodeSyncParallelism: 32
+
+  # Use paged list for pod sync — reduces memory spikes with many pods.
+  enablePodsOnNodeSyncListPager: true
+
+  # Use streaming watch for pod sync — incremental updates instead of
+  # periodic full list, reducing apiserver load.
+  enablePodsOnNodeSyncStreamWatch: true

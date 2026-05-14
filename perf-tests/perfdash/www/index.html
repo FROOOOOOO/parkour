@@ -1,0 +1,72 @@
+<html lang="en" ng-app="PerfDashApp">
+  <head>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/0.9.4/angular-material.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=RobotoDraft:300,400,500,700,400italic">
+    <meta name="viewport" content="initial-scale=1" />
+  </head>
+  <body>
+    <div layout="column" style="margin-top: 20px; width: 80%" offset="10" ng-controller="AppCtrl">
+      <md-toolbar layout="row" layout-align="space-around center">
+        <h1 class="md-display-2">Performance Dashboard</h1>
+        <!-- TODO: Need a better logo here -->
+        <a href="https://k8s.io"><img src="k8s_logo.png" style="width:84; height: 84" /></a>
+      </md-toolbar>
+      <div id="content" class="md-whiteframe-z2" style="padding: 20px;">
+        <div style="width: 200px; display: inline-block;">
+          <md-input-container>
+            <md-select ng-model="controller.jobName" ng-change="controller.jobNameChanged()" aria-label="job name">
+              <md-option ng-value="jobName" ng-repeat="jobName in controller.jobNames">
+                {{jobName}}
+              </md-option>
+            </md-select>
+          </md-input-container>
+        </div>
+        <div style="width: 300px; display: inline-block;">
+          <md-input-container>
+            <md-select placeholder="MetricCategoryName" ng-model="controller.metricCategoryName"  ng-change="controller.metricCategoryNameChanged()">
+              <md-option ng-value="metricCategoryName" ng-repeat="metricCategoryName in controller.metricCategoryNames">
+                {{metricCategoryName}}
+              </md-option>
+            </md-select>
+          </md-input-container>
+        </div>
+        <div style="width: 250px; display: inline-block;">
+          <md-input-container>
+            <md-select placeholder="MetricName" ng-model="controller.metricName" ng-change="controller.metricNameChanged()">
+              <md-option ng-value="metricName" ng-repeat="metricName in controller.metricNames">
+                {{metricName}}
+              </md-option>
+            </md-select>
+          </md-input-container>
+        </div>
+        <div ng-repeat="(name, items) in controller.labels" ng-model="controller.metricName" ng-change="controller.labelChanged()" style="width: 200px; display: inline-block;">
+          <md-input-container>
+            <md-select placeholder="name" ng-model="controller.selectedLabels[name]"  ng-change="controller.labelChanged()">
+              <md-option ng-value="item" ng-repeat="item in items">
+                {{item}}
+              </md-option>
+            </md-select>
+          </md-input-container>
+        </div>
+        <canvas id="line" class="chart chart-line" chart-data="controller.seriesData"
+                chart-labels="controller.builds" chart-options="controller.options"
+                chart-series="controller.series" chart-click="controller.onClick">
+        </canvas>
+        <p style="text-align: center">Runs over time</p>
+      </div>
+      <p style="font-size: x-small; font-style: italic">
+        Click a data point to see build logs. CTRL+click anywhere to trim outliers.
+      </p>
+      <!-- Angular Material Dependencies -->
+      <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-route.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/angular_material/0.9.4/angular-material.min.js"></script>
+
+      <script src="Chart.js"></script>
+      <script src="angular-chart.js"></script>
+      <script src="script.js"></script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+# Template for a per-scheduler-instance NodePort Service.
+# Variables (substituted by setup.sh):
+#   ${SCHED_INDEX}     - instance index (0..9 for N=10)
+#   ${SCHED_NODE_PORT} - NodePort (30210 + SCHED_INDEX)
+apiVersion: v1
+kind: Service
+metadata:
+  name: godel-scheduler-metrics-${SCHED_INDEX}
+  namespace: godel-system
+  labels:
+    app: godel-scheduler
+    instance: godel-sched-${SCHED_INDEX}
+    component: godel
+spec:
+  type: NodePort
+  selector:
+    app: godel-scheduler
+    instance: godel-sched-${SCHED_INDEX}
+  ports:
+    - name: metrics
+      port: 10251
+      targetPort: 10251
+      nodePort: ${SCHED_NODE_PORT}

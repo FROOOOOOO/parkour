@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: preload
+  namespace: preload
+spec:
+  selector:
+    matchLabels:
+      name: preload
+  template:
+    metadata:
+      labels:
+        name: preload
+    spec:
+      initContainers:
+      {{range $idx, $image := .Images}}
+      - name: preload-{{$idx}}
+        image: gcr.io/k8s-testimages/perf-tests-util/containerd:v0.0.1
+        command: ["sh", "-c", "ctr -n=k8s.io image pull {{$image}} 2>&1 | tee /var/log/cl2-image-preload-{{$idx}}.log"]
+        volumeMounts:
+        - name: containerd
+          mountPath: /run/containerd
+        - name: logs-volume
+          mountPath: /var/log
+      {{end}}
+      volumes:
+      - name: containerd
+        hostPath:
+          path: /run/containerd
+      - name: logs-volume
+        hostPath:
+          path: /var/log
+      containers:
+      - name: pause
+        image: gcr.io/google_containers/pause

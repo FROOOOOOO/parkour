@@ -1,0 +1,239 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: parsyncconfigs.scheduling.parscheduler.io
+spec:
+  group: scheduling.parscheduler.io
+  names:
+    kind: ParSyncConfig
+    listKind: ParSyncConfigList
+    plural: parsyncconfigs
+    shortNames:
+    - psc
+    singular: parsyncconfig
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.numPartitions
+      name: Partitions
+      type: integer
+    - jsonPath: .spec.syncPeriod
+      name: SyncPeriod
+      type: string
+    - jsonPath: .status.activeSchedulers
+      name: Schedulers
+      type: integer
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: ParSyncConfig 定义 ParSync 全局配置
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ParSyncConfigSpec 定义 ParSync 配置的期望状态
+            properties:
+              criticalEventTypes:
+                description: CriticalEventTypes 需要立即同步的关键事件类型
+                items:
+                  type: string
+                type: array
+              enableEventDriven:
+                default: true
+                description: EnableEventDriven 是否启用事件驱动更新
+                type: boolean
+              failoverTimeout:
+                default: 15s
+                description: FailoverTimeout 调度器故障转移超时
+                type: string
+              globalClockSyncEnabled:
+                default: true
+                description: GlobalClockSyncEnabled 是否启用全局时钟同步
+                type: boolean
+              heartbeatInterval:
+                default: 5s
+                description: HeartbeatInterval 心跳间隔
+                type: string
+              numPartitions:
+                default: 4
+                description: NumPartitions 分区数量
+                maximum: 64
+                minimum: 1
+                type: integer
+              rebalancePolicy:
+                allOf:
+                - enum:
+                  - MinimalMove
+                  - EvenDistribution
+                - enum:
+                  - MinimalMove
+                  - EvenDistribution
+                default: MinimalMove
+                description: RebalancePolicy 重平衡策略
+                type: string
+              rebalanceThreshold:
+                default: 2
+                description: RebalanceThreshold 触发重平衡的不均匀阈值
+                minimum: 1
+                type: integer
+              stalenessTolerance:
+                default: 5s
+                description: StalenessTolerance 陈旧度容忍阈值
+                type: string
+              syncPeriod:
+                default: 3s
+                description: SyncPeriod 完整同步周期
+                type: string
+            type: object
+          status:
+            description: ParSyncConfigStatus 定义 ParSync 配置的观察状态
+            properties:
+              activeSchedulers:
+                description: ActiveSchedulers 当前活跃调度器数
+                type: integer
+              calculatedSyncInterval:
+                description: CalculatedSyncInterval 计算得出的分区同步间隔
+                type: string
+              conditions:
+                description: Conditions 状态条件
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              currentEpoch:
+                description: CurrentEpoch 当前周期数
+                format: int64
+                type: integer
+              globalClockBase:
+                description: GlobalClockBase 全局同步时钟基准（Unix 纳秒）
+                format: int64
+                type: integer
+              lastRebalanceTime:
+                description: LastRebalanceTime 最后重平衡时间
+                format: date-time
+                type: string
+              partitionAssignments:
+                additionalProperties:
+                  type: string
+                description: PartitionAssignments 分区分配映射 (partitionID -> schedulerName)
+                type: object
+              schedulerStatuses:
+                description: SchedulerStatuses 各调度器状态摘要
+                items:
+                  description: SchedulerStatusSummary 调度器状态摘要
+                  properties:
+                    assignedPartitions:
+                      description: AssignedPartitions 分配的分区数
+                      type: integer
+                    healthy:
+                      description: Healthy 是否健康
+                      type: boolean
+                    lastHeartbeat:
+                      description: LastHeartbeat 最后心跳
+                      format: date-time
+                      type: string
+                    name:
+                      description: Name 调度器名称
+                      type: string
+                    phase:
+                      description: Phase 阶段
+                      enum:
+                      - Pending
+                      - Initializing
+                      - Running
+                      - Degraded
+                      - Failed
+                      - Terminating
+                      type: string
+                    schedulerId:
+                      description: SchedulerID 调度器 ID
+                      type: integer
+                  required:
+                  - assignedPartitions
+                  - healthy
+                  - name
+                  - phase
+                  - schedulerId
+                  type: object
+                type: array
+              totalSchedulers:
+                description: TotalSchedulers 总调度器数（包括不健康的）
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

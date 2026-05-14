@@ -1,0 +1,58 @@
+# Template for a single para-scheduler instance (local Kind cluster).
+# Variables (substituted by setup.sh):
+#   ${SCHED_INDEX}  - instance index (0, 1, 2, ...)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: para-scheduler-${SCHED_INDEX}
+  namespace: para-system
+  labels:
+    app: para-scheduler
+    instance: sched-${SCHED_INDEX}
+    component: para-sched
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: para-scheduler
+      instance: sched-${SCHED_INDEX}
+  template:
+    metadata:
+      labels:
+        app: para-scheduler
+        instance: sched-${SCHED_INDEX}
+        component: para-sched
+    spec:
+      serviceAccountName: para-scheduler
+      containers:
+        - name: scheduler
+          image: para-scheduler/kube-scheduler:latest
+          imagePullPolicy: Never
+          command: ["/kube-scheduler"]
+          args:
+            - "--config=/etc/scheduler/scheduler-config.yaml"
+            - "--v=3"
+            - "--parasched-name=sched-${SCHED_INDEX}"
+            - "--parasched-candidate-k=2"
+            - "--parasched-strategy.name=QualityFirst"
+            - "--parasched-strategy.penalty-weight=0.3"
+            - "--parasched-enable-parsync=false"
+            - "--parasched-num-partitions=10"
+            - "--parasched-sync-period=1s"
+            - "--parasched-namespace=para-system"
+            - "--parasched-stats-name=default"
+          volumeMounts:
+            - name: scheduler-config
+              mountPath: /etc/scheduler
+              readOnly: true
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: scheduler-config
+          configMap:
+            name: para-scheduler-config

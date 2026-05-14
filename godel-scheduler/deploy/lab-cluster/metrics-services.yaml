@@ -1,0 +1,42 @@
+# NodePort Services exposing /metrics for Prometheus on Node A (<MONITORING_IP>).
+# Port allocation (avoid collision with para-scheduler 30080-30105):
+#   binder:           30200  →  :10451/metrics
+#   dispatcher:       30201  →  :10351/metrics
+#   controller-mgr:   30202  →  :10269/metrics  (optional, kept for parity)
+#   schedulers:       30210..30219  →  :10251/metrics (template-rendered)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: binder-metrics
+  namespace: godel-system
+  labels:
+    app: binder
+    component: godel
+spec:
+  type: NodePort
+  selector:
+    app: binder
+  ports:
+    - name: metrics
+      port: 10451
+      targetPort: 10451
+      nodePort: 30200
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dispatcher-metrics
+  namespace: godel-system
+  labels:
+    app: dispatcher
+    component: godel
+spec:
+  type: NodePort
+  selector:
+    app: dispatcher
+  ports:
+    - name: metrics
+      port: 10351
+      targetPort: 10351
+      nodePort: 30201

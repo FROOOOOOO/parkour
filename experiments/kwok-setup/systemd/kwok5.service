@@ -1,0 +1,30 @@
+[Unit]
+Description=KWOK Shard 5 (Kubernetes WithOut Kubelet)
+Documentation=https://kwok.sigs.k8s.io/
+After=network.target
+
+[Service]
+Type=simple
+User=<user>
+Group=<user>
+WorkingDirectory=/home/<user>
+
+ExecStart=/home/<user>/go/bin/kwok \
+  --kubeconfig=/home/<user>/.kube/config \
+  --config=/home/<user>/<repo>/experiments/kwok-setup/kwok-config.yaml \
+  --manage-all-nodes=false \
+  --manage-nodes-with-annotation-selector=kwok.x-k8s.io/node=fake5 \
+  --manage-nodes-with-label-selector= \
+  --manage-single-node= \
+  --node-lease-duration-seconds=100
+
+Restart=always
+RestartSec=10
+
+StandardOutput=journal
+StandardError=journal
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

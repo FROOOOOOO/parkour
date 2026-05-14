@@ -1,0 +1,38 @@
+# Binder deployment for local Kind cluster (1 replica).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: para-binder
+  namespace: para-system
+  labels:
+    app: para-binder
+    component: para-sched
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: para-binder
+  template:
+    metadata:
+      labels:
+        app: para-binder
+        component: para-sched
+    spec:
+      serviceAccountName: para-scheduler
+      containers:
+        - name: binder
+          image: para-scheduler/binder:latest
+          imagePullPolicy: Never  # Use kind load docker-image
+          args:
+            - "--sync-mode=event"
+            - "--workers=2"
+            - "--assumed-pod-ttl=30s"
+            - "--stats-name=default"
+            - "--stats-flush-period=1s"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

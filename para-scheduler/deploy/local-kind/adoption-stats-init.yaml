@@ -1,0 +1,13 @@
+# Initial AdoptionStats CR for binding result aggregation.
+# Name "default" matches binder's --stats-name default and
+# scheduler's PARASCHED_STATS_NAME default.
+apiVersion: scheduling.parscheduler.io/v1
+kind: AdoptionStats
+metadata:
+  name: default
+spec:
+  parSyncConfigRef: "default"
+  maxCandidates: 10
+  aggregationInterval: "10s"
+  retentionPeriod: "1h"
+  decayFactor: "0.95"

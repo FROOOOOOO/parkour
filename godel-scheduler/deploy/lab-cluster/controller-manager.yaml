@@ -1,0 +1,49 @@
+# Godel Controller Manager. Handles preemption / movement reconciliation /
+# podgroup state machine. Not strictly required for plain Pod scheduling
+# (E1 smoke test passed without exercising it), but kept for parity with the
+# base manifest so that Reservation / Preemption code paths remain available.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: godel-system
+  labels:
+    app: controller-manager
+    component: godel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: controller-manager
+  template:
+    metadata:
+      labels:
+        app: controller-manager
+        component: godel
+    spec:
+      serviceAccountName: godel
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      containers:
+        - name: controller-manager
+          image: godel-local:latest
+          imagePullPolicy: Never
+          command: ["/usr/local/bin/controller"]
+          args:
+            - "--leader-elect=false"
+            - "--v=4"
+            - "--reservation-ttl=60"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 500Mi

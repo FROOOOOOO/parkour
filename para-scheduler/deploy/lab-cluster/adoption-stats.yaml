@@ -1,0 +1,12 @@
+# AdoptionStats singleton CR — Binder writes binding statistics here,
+# Schedulers read conflict rates from it.
+apiVersion: scheduling.parscheduler.io/v1
+kind: AdoptionStats
+metadata:
+  name: default
+spec:
+  parSyncConfigRef: default
+  maxCandidates: 10
+  aggregationInterval: "10s"
+  retentionPeriod: "1h"
+  decayFactor: "0.95"

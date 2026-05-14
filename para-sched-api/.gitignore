@@ -1,0 +1,24 @@
+# --- Build artifacts ---
+bin/
+para-sched-api
+*.exe
+*.test
+
+# --- Temporary files ---
+*.out
+*.log
+
+# --- OS-specific files ---
+.DS_Store
+Thumbs.db
+
+# --- IDE config ---
+# VS Code
+.vscode/
+# GoLand / IntelliJ
+.idea/
+*.iml
+
+# --- Dependency cache (rarely needed) ---
+# Uncomment if using vendor mode and not committing the vendor directory:
+# vendor/

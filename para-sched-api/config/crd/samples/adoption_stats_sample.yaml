@@ -1,0 +1,11 @@
+# config/samples/adoption_stats_sample.yaml
+apiVersion: scheduling.parscheduler.io/v1
+kind: AdoptionStats
+metadata:
+  name: default
+spec:
+  parSyncConfigRef: default
+  maxCandidates: 10
+  aggregationInterval: "10s"
+  retentionPeriod: "1h"
+  decayFactor: "0.95"

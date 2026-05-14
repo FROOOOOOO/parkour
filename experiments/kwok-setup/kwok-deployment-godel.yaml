@@ -1,0 +1,47 @@
+# KWOK deployment template for Godel baseline (E1/E2).
+# Mirror of kwok-deployment.yaml, with `schedulerName: godel-scheduler` so that
+# CL2-injected saturation pods are dispatched to the Godel control plane in
+# `godel-system` namespace instead of `para-scheduler` in `para-system`.
+#
+# Selected at run time via the CL2 testoverride:
+#   SATURATION_DEPLOYMENT_SPEC: kwok-deployment-godel.yaml
+# (cl2-saturation-only.yaml already exposes this as a parameter — see line ~30.)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Name}}
+  labels:
+    group: {{.Group}}
+spec:
+  replicas: {{.Replicas}}
+  selector:
+    matchLabels:
+      name: {{.Name}}
+  template:
+    metadata:
+      labels:
+        name: {{.Name}}
+        group: {{.Group}}
+        type: kwok
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: type
+                    operator: In
+                    values:
+                    - kwok
+      schedulerName: godel-scheduler
+      tolerations:
+          - key: "kwok.x-k8s.io/node"
+            operator: "Exists"
+            effect: "NoSchedule"
+      containers:
+        - image: fake-pod
+          name: {{.Name}}
+          resources:
+            requests:
+              cpu: "{{.CpuRequest}}"
+              memory: "{{.MemoryRequest}}"

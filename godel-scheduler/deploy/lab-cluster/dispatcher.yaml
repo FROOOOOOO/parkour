@@ -1,0 +1,50 @@
+# Godel Dispatcher deployment for lab cluster (1master+3worker, K8s v1.33.5).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dispatcher
+  namespace: godel-system
+  labels:
+    app: dispatcher
+    component: godel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dispatcher
+  template:
+    metadata:
+      labels:
+        app: dispatcher
+        component: godel
+    spec:
+      serviceAccountName: godel
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      containers:
+        - name: dispatcher
+          image: godel-local:latest
+          imagePullPolicy: Never
+          command: ["/usr/local/bin/dispatcher"]
+          args:
+            - "--leader-elect=false"
+            - "--tracer=noop"
+            - "--v=4"
+          env:
+            - name: TZ
+              value: UTC
+          ports:
+            - name: metrics
+              containerPort: 10351
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 500m
+              memory: 256Mi

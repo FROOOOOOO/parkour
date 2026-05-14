@@ -1,0 +1,76 @@
+{{$PROMETHEUS_SCRAPE_KUBELETS := DefaultParam .PROMETHEUS_SCRAPE_KUBELETS false}}
+{{$PROMETHEUS_NODE_SELECTOR := DefaultParam .CL2_PROMETHEUS_NODE_SELECTOR ""}}
+{{$PROMETHEUS_TOLERATE_MASTER := DefaultParam .CL2_PROMETHEUS_TOLERATE_MASTER false}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: prometheus-operator
+    app.kubernetes.io/version: 0.81.0
+  name: prometheus-operator
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/name: prometheus-operator
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: prometheus-operator
+      labels:
+        app.kubernetes.io/component: controller
+        app.kubernetes.io/name: prometheus-operator
+        app.kubernetes.io/version: 0.81.0
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - args:
+        {{if $PROMETHEUS_SCRAPE_KUBELETS}}
+        - --kubelet-service=kube-system/kubelet
+        {{end}}
+        - --prometheus-config-reloader=gcr.io/k8s-testimages/quay.io/prometheus-operator/prometheus-config-reloader:v0.81.0
+        - --kubelet-endpoints=true
+        - --kubelet-endpointslice=false
+        env:
+        - name: GOGC
+          value: "30"
+        image: gcr.io/k8s-testimages/quay.io/prometheus-operator/prometheus-operator:v0.81.0
+        name: prometheus-operator
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          limits:
+            cpu: 200m
+            memory: {{IfThenElse (lt .Nodes 500) 200 400}}Mi
+          requests:
+            cpu: 200m
+            memory: {{IfThenElse (lt .Nodes 500) 200 400}}Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+      {{if $PROMETHEUS_TOLERATE_MASTER}}
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      {{end}}
+      nodeSelector:
+        kubernetes.io/os: linux
+        {{StructuralData $PROMETHEUS_NODE_SELECTOR}}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: prometheus-operator

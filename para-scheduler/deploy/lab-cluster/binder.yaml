@@ -1,0 +1,58 @@
+# Binder deployment for lab cluster (1master+3worker, K8s v1.33.5).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: para-binder
+  namespace: para-system
+  labels:
+    app: para-binder
+    component: para-sched
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: para-binder
+  template:
+    metadata:
+      labels:
+        app: para-binder
+        component: para-sched
+    spec:
+      serviceAccountName: para-scheduler
+      # Prefer scheduling on master node to reduce latency to API server.
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      containers:
+        - name: binder
+          image: para-scheduler/binder:latest
+          imagePullPolicy: Never
+          args:
+            - "--v=4"
+            - "--sync-mode=event"
+            - "--workers=8"
+            - "--assumed-pod-ttl=30s"
+            - "--stats-name=default"
+            - "--stats-flush-period=1s"
+            - "--metrics-addr=:8080"
+            - "--kube-api-qps=10000"
+            - "--kube-api-burst=10000"
+            # ParSync mode: uncomment the lines below and comment event mode above.
+            # - "--sync-mode=periodic"
+            # - "--num-partitions=10"
+            # - "--sync-period=1s"
+            # - "--snapshot-flush-interval=100ms"
+          env:
+            - name: TZ
+              value: UTC
+          ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
