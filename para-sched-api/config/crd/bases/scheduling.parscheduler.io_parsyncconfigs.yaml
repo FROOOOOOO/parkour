@@ -32,7 +32,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: ParSyncConfig 定义 ParSync 全局配置
+        description: ParSyncConfig defines the global ParSync configuration.
         properties:
           apiVersion:
             description: |-
@@ -52,32 +52,32 @@ spec:
           metadata:
             type: object
           spec:
-            description: ParSyncConfigSpec 定义 ParSync 配置的期望状态
+            description: ParSyncConfigSpec defines the desired state of a ParSyncConfig.
             properties:
               criticalEventTypes:
-                description: CriticalEventTypes 需要立即同步的关键事件类型
+                description: CriticalEventTypes lists event types that trigger an immediate sync.
                 items:
                   type: string
                 type: array
               enableEventDriven:
                 default: true
-                description: EnableEventDriven 是否启用事件驱动更新
+                description: EnableEventDriven enables immediate partition updates triggered by cluster events.
                 type: boolean
               failoverTimeout:
                 default: 15s
-                description: FailoverTimeout 调度器故障转移超时
+                description: FailoverTimeout is the duration after which an unresponsive scheduler triggers partition failover.
                 type: string
               globalClockSyncEnabled:
                 default: true
-                description: GlobalClockSyncEnabled 是否启用全局时钟同步
+                description: GlobalClockSyncEnabled enables global clock synchronization across schedulers.
                 type: boolean
               heartbeatInterval:
                 default: 5s
-                description: HeartbeatInterval 心跳间隔
+                description: HeartbeatInterval is the interval between scheduler heartbeats.
                 type: string
               numPartitions:
                 default: 4
-                description: NumPartitions 分区数量
+                description: NumPartitions is the number of partitions to divide the cluster into.
                 maximum: 64
                 minimum: 1
                 type: integer
@@ -90,33 +90,33 @@ spec:
                   - MinimalMove
                   - EvenDistribution
                 default: MinimalMove
-                description: RebalancePolicy 重平衡策略
+                description: RebalancePolicy controls how partition assignments are rebalanced.
                 type: string
               rebalanceThreshold:
                 default: 2
-                description: RebalanceThreshold 触发重平衡的不均匀阈值
+                description: RebalanceThreshold is the imbalance ratio above which rebalancing is triggered.
                 minimum: 1
                 type: integer
               stalenessTolerance:
                 default: 5s
-                description: StalenessTolerance 陈旧度容忍阈值
+                description: StalenessTolerance is the maximum acceptable partition view age before a scheduler is considered stale.
                 type: string
               syncPeriod:
                 default: 3s
-                description: SyncPeriod 完整同步周期
+                description: SyncPeriod is the full partition sync cycle duration.
                 type: string
             type: object
           status:
-            description: ParSyncConfigStatus 定义 ParSync 配置的观察状态
+            description: ParSyncConfigStatus defines the observed state of a ParSyncConfig.
             properties:
               activeSchedulers:
-                description: ActiveSchedulers 当前活跃调度器数
+                description: ActiveSchedulers is the count of currently active schedulers.
                 type: integer
               calculatedSyncInterval:
-                description: CalculatedSyncInterval 计算得出的分区同步间隔
+                description: CalculatedSyncInterval is the per-partition sync interval derived from SyncPeriod / NumPartitions.
                 type: string
               conditions:
-                description: Conditions 状态条件
+                description: Conditions holds standard Kubernetes condition values.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -173,42 +173,42 @@ spec:
                   type: object
                 type: array
               currentEpoch:
-                description: CurrentEpoch 当前周期数
+                description: CurrentEpoch is the current sync epoch counter.
                 format: int64
                 type: integer
               globalClockBase:
-                description: GlobalClockBase 全局同步时钟基准（Unix 纳秒）
+                description: GlobalClockBase is the global sync clock origin in Unix nanoseconds.
                 format: int64
                 type: integer
               lastRebalanceTime:
-                description: LastRebalanceTime 最后重平衡时间
+                description: LastRebalanceTime is when the last partition rebalance occurred.
                 format: date-time
                 type: string
               partitionAssignments:
                 additionalProperties:
                   type: string
-                description: PartitionAssignments 分区分配映射 (partitionID -> schedulerName)
+                description: PartitionAssignments maps partition IDs to the scheduler name that owns them.
                 type: object
               schedulerStatuses:
-                description: SchedulerStatuses 各调度器状态摘要
+                description: SchedulerStatuses is a summary of every registered scheduler's status.
                 items:
-                  description: SchedulerStatusSummary 调度器状态摘要
+                  description: SchedulerStatusSummary is a brief status snapshot for a single scheduler.
                   properties:
                     assignedPartitions:
-                      description: AssignedPartitions 分配的分区数
+                      description: AssignedPartitions is the number of partitions assigned to this scheduler.
                       type: integer
                     healthy:
-                      description: Healthy 是否健康
+                      description: Healthy reports whether the scheduler is considered healthy.
                       type: boolean
                     lastHeartbeat:
-                      description: LastHeartbeat 最后心跳
+                      description: LastHeartbeat is the timestamp of the most recent heartbeat from this scheduler.
                       format: date-time
                       type: string
                     name:
-                      description: Name 调度器名称
+                      description: Name is the scheduler's name.
                       type: string
                     phase:
-                      description: Phase 阶段
+                      description: Phase is the scheduler's current lifecycle phase.
                       enum:
                       - Pending
                       - Initializing
@@ -218,7 +218,7 @@ spec:
                       - Terminating
                       type: string
                     schedulerId:
-                      description: SchedulerID 调度器 ID
+                      description: SchedulerID is the scheduler's numeric ID.
                       type: integer
                   required:
                   - assignedPartitions
@@ -229,7 +229,7 @@ spec:
                   type: object
                 type: array
               totalSchedulers:
-                description: TotalSchedulers 总调度器数（包括不健康的）
+                description: TotalSchedulers is the total registered scheduler count, including unhealthy ones.
                 type: integer
             type: object
         type: object

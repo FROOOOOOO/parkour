@@ -344,6 +344,15 @@ query_metric "partition_staleness_p50" \
 query_metric "partition_staleness_p99" \
     'histogram_quantile(0.99, sum(rate(scheduler_parasched_partition_staleness_seconds_bucket[1m])) by (le))'
 
+# Conflict-rate feed age P50/P99. Shares buckets with partition_staleness so the
+# two delivery pipelines (lightweight penalty feed vs full snapshot) can be
+# compared directly. Only non-empty when the penalty mechanism is enabled (w>0).
+query_metric "penalty_signal_age_p50" \
+    'histogram_quantile(0.50, sum(rate(scheduler_parasched_penalty_signal_age_seconds_bucket[1m])) by (le))'
+
+query_metric "penalty_signal_age_p99" \
+    'histogram_quantile(0.99, sum(rate(scheduler_parasched_penalty_signal_age_seconds_bucket[1m])) by (le))'
+
 # All candidates failed rate
 query_metric "all_candidates_failed_rate" \
     'rate(parasched_all_candidates_failed_total[1m])'

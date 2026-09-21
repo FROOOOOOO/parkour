@@ -234,7 +234,7 @@ def emit_audit(audit, lines):
 
 
 def emit_b1(d, lines):
-    lines.append("## 1.2 B1 (Low-contention scale-out, co-located microservice scenario)")
+    lines.append("## 1.2 B1 (low-contention scale-out, co-located microservice scenario)")
     lines.append("")
     lines.append("Configs: ppn=29, cpu=1c, mem=8Gi, V=0.6, sync_period=0.1, "
                  "partitions=1, sync_pattern=diff, strategy=QualityFirst.")
@@ -268,7 +268,7 @@ def emit_b1(d, lines):
 
 
 def emit_b2(d, lines):
-    lines.append("## 5.2 B2 (High-contention Pareto, 4 scales × 7 configs)")
+    lines.append("## 5.2 B2 (high-contention Pareto, 4 scales x 7 configs)")
     lines.append("")
     lines.append("Configs: ppn=1, cpu=24c, mem=192Gi, V=0.6, partitions=1 for "
                  "P1/P4 (glob), partitions=10 for P2/P3 (same/diff).")
@@ -287,7 +287,7 @@ def emit_b2(d, lines):
 
 
 def emit_b3(d, lines):
-    lines.append("## 1.3 B3 (Scheduler-count scalability, 10K nodes × 4 configs × 5 N)")
+    lines.append("## 1.3 B3 (scheduler-count scalability, 10K nodes x 4 configs x 5 N)")
     lines.append("")
     lines.append("Configs: 10000n / V=0.6 / N ∈ {2,4,6,8,10}. "
                  "E2: K=0,p=0,sp=0.1,diff; E3: K=2,p=0.5,sp=0.1,diff; "
@@ -326,7 +326,7 @@ def emit_overhead(d, lines):
     """Overhead from B2-10000n and B2-20000n cells."""
     lines.append("## 3. Overhead (CPU/MEM, B2 saturation snapshot)")
     lines.append("")
-    lines.append("CPU in cores (10 schedulers combined); MEM in GiB (10 schedulers combined).")
+    lines.append("CPU in cores (summed over 10 schedulers); MEM in GiB (summed over 10 schedulers).")
     lines.append("")
     for size in [10000, 20000]:
         lines.append(f"### 10K → {size}n")

@@ -20,6 +20,15 @@ import (
 	"k8s.io/component-base/metrics"
 )
 
+// stalenessBuckets is shared by ParaSchedPartitionStaleness and
+// ParaSchedPenaltySignalAge. Sharing is required, not stylistic: the two
+// histograms are compared bucket-for-bucket to show that the lightweight
+// conflict-rate feed lands sooner than the full snapshot, which is only valid
+// if the bucket edges are identical. The 1.5x ratio (vs the previous 2x) puts
+// edges at 0.58/0.87/1.30/1.95/2.92s — the range that decides whether a
+// snapshot missed its sync period, which the old buckets collapsed into one.
+var stalenessBuckets = metrics.ExponentialBuckets(0.01, 1.5, 20) // 10ms … ~22s
+
 // para-sched custom metrics.
 // These are registered together with the standard scheduler metrics via
 // InitParaSchedMetrics(), which is called from InitMetrics().
@@ -43,6 +52,13 @@ var (
 	// ParaSchedPartitionStaleness records the staleness (in seconds) of
 	// the partition snapshot when it is applied.
 	ParaSchedPartitionStaleness *metrics.Histogram
+
+	// ParaSchedPenaltySignalAge records the age (in seconds) of the
+	// conflict-rate feed at the moment the scheduler installs it, i.e. the
+	// penalty-side counterpart of ParaSchedPartitionStaleness. Both are
+	// observed at install time and share stalenessBuckets, so the two
+	// delivery pipelines can be compared bucket-for-bucket.
+	ParaSchedPenaltySignalAge *metrics.Histogram
 
 	// ParaSchedFirstSnapshotApplied marks (as a Unix timestamp gauge) the
 	// first time each partition's snapshot was successfully applied.
@@ -114,7 +130,17 @@ func InitParaSchedMetrics() {
 			Subsystem:      SchedulerSubsystem,
 			Name:           "parasched_partition_staleness_seconds",
 			Help:           "Staleness of a partition snapshot at the time it is applied (now - snapshot.Timestamp).",
-			Buckets:        metrics.ExponentialBuckets(0.01, 2, 12), // 10ms … ~20s
+			Buckets:        stalenessBuckets,
+			StabilityLevel: metrics.ALPHA,
+		},
+	)
+
+	ParaSchedPenaltySignalAge = metrics.NewHistogram(
+		&metrics.HistogramOpts{
+			Subsystem:      SchedulerSubsystem,
+			Name:           "parasched_penalty_signal_age_seconds",
+			Help:           "Age of the conflict-rate feed when the scheduler installs it (now - AdoptionStats.status.lastUpdateTime).",
+			Buckets:        stalenessBuckets,
 			StabilityLevel: metrics.ALPHA,
 		},
 	)
@@ -147,6 +173,7 @@ func ParaSchedMetricsList() []metrics.Registerable {
 		ParaSchedSelectedNodeScore,
 		ParaSchedSyncDuration,
 		ParaSchedPartitionStaleness,
+		ParaSchedPenaltySignalAge,
 		ParaSchedFirstSnapshotApplied,
 		ParaSchedAssumedPodCount,
 	}

@@ -1,7 +1,7 @@
-# 自动处理行尾符
+# Normalize line endings automatically
 * text=auto eol=lf
 
-# 特定文件类型强制使用 LF（脚本类）
+# Force LF for script-like file types
 *.sh text eol=lf
 *.py text eol=lf
 *.js text eol=lf
@@ -11,11 +11,11 @@
 *.yaml text eol=lf
 *.md text eol=lf
 
-# Windows 批处理文件保留 CRLF（如果存在）
+# Keep CRLF for Windows batch files (if any)
 *.bat text eol=crlf
 *.cmd text eol=crlf
 
-# 二进制文件不处理（防止损坏）
+# Leave binary files untouched (prevents corruption)
 *.png binary
 *.jpg binary
 *.jpeg binary

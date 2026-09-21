@@ -35,6 +35,18 @@ plt.rcParams["xtick.labelsize"] = 11
 plt.rcParams["ytick.labelsize"] = 11
 plt.rcParams["legend.fontsize"] = 10.5
 plt.rcParams["legend.title_fontsize"] = 11
+# fonttype 42 keeps the PDF/PS text as embedded TrueType subsets. Matplotlib
+# defaults to Type 3, which ACM camera-ready rejects and which also leaves the
+# figure text unsearchable.
+plt.rcParams["pdf.fonttype"]    = 42
+plt.rcParams["ps.fonttype"]     = 42
+plt.rcParams["svg.fonttype"]    = "none"
+# Mathtext carries its own font set on top of font.family, so it has to be
+# pointed at Arial too or any $...$ label renders in matplotlib's DejaVu.
+plt.rcParams["mathtext.fontset"] = "custom"
+plt.rcParams["mathtext.rm"]      = "Arial"
+plt.rcParams["mathtext.it"]      = "Arial:italic"
+plt.rcParams["mathtext.bf"]      = "Arial:bold"
 
 GRID_KW      = dict(linestyle="--", alpha=0.45, linewidth=0.8)
 OUTPUT_FMTS  = ("pdf", "svg", "png")
@@ -70,13 +82,13 @@ MARKER = {
 }
 
 LABEL = {
-    "E2": "vanilla-E",
-    "P1": "vanilla-P",
+    "E2": "Vanilla (event-driven)",
+    "P1": "Vanilla (periodic)",
     "P2": "sameSync",
     "P3": "diffSync",
-    "E3": "ParKour-E",
-    "P4": "ParKour-P",
-    "G":  "Godel",
+    "E3": "ParKour (event-driven)",
+    "P4": "ParKour (periodic)",
+    "G":  "Gödel",
 }
 
 NODE_SIZES = [2000, 5000, 10000, 20000]
@@ -217,11 +229,10 @@ def inject_godel(data):
 
 # ── shared plot helpers ─────────────────────────────────────────────────────────
 def _setup_axes(ax):
-    ax.set_xlabel("ACF Rate")
+    ax.set_xlabel("ACF rate")
     ax.set_ylabel("Throughput (pods/s)")
     ax.xaxis.set_major_formatter(ticker.PercentFormatter(1.0, decimals=0))
     ax.grid(True, **GRID_KW, zorder=0)
-    sns.despine(ax=ax)
 
 
 def save_fig(fig, out_dir, name):
@@ -239,11 +250,16 @@ def save_fig(fig, out_dir, name):
 
 
 # ── Pareto across scales: 2k / 5k / 10k / 20k ─────────────────────────────────
-# Marker size encodes node count (small=2K, large=20K) so scale is
+# Marker size encodes node count (small=2k, large=20k) so scale is
 # legible at a glance without per-point text labels (which collide in dense
 # regions like P1/P2/P3 at high ACF).
 NODE_MSIZE = {2000: 5, 5000: 8, 10000: 11, 20000: 14}
-NODE_LABEL = {2000: "2K", 5000: "5K", 10000: "10K", 20000: "20K"}
+NODE_LABEL = {
+    2000: "2k",
+    5000: "5k",
+    10000: "10k",
+    20000: "20k",
+}
 
 
 def _scale_legend_handles():
@@ -313,12 +329,33 @@ def plot_all_scales(data, out_dir):
                 zorder=5,
             )
 
+    # Lower ACF and higher throughput are jointly preferable.
+    ax.annotate(
+        "Better",
+        xy=(0.30, 0.96),
+        xytext=(0.43, 0.86),
+        xycoords="axes fraction",
+        textcoords="axes fraction",
+        ha="center",
+        va="center",
+        fontsize=10.5,
+        fontweight="bold",
+        color="#444444",
+        arrowprops=dict(
+            arrowstyle="-|>",
+            color="#444444",
+            linewidth=1.5,
+            mutation_scale=13,
+        ),
+        zorder=8,
+    )
+
     # Two-part legend so method (color/shape) and scale (marker size) are
     # decoupled visually; otherwise the same "20K" tag appears 6 times in
     # the figure body and clutters the dense P1/P2/P3 cluster.
     method_legend = ax.legend(
         handles=_legend_handles(STRATEGIES),
-        loc=(0.74, 0.58),
+        loc=(0.58, 0.50),
         title="Method",
         framealpha=0.92, edgecolor="#bbbbbb",
         labelspacing=0.45, handletextpad=0.6,
@@ -328,8 +365,10 @@ def plot_all_scales(data, out_dir):
 
     ax.legend(
         handles=_scale_legend_handles(),
-        loc=(0.8, 0.2),
-        title="Node scale",
+        # Shifted right of the high-ACF/low-throughput cluster and its
+        # horizontal whiskers, which reached the old box's lower-left corner.
+        loc=(0.79, 0.15),
+        title="Cluster size",
         framealpha=0.92, edgecolor="#bbbbbb",
         labelspacing=0.7, handletextpad=0.8,
         borderpad=0.6,

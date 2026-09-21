@@ -718,6 +718,12 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
     staleness_p50_ms = round(staleness_p50 * 1000, 3) if staleness_p50 is not None else None
     staleness_p99 = _prom_instant_value(_load_json(os.path.join(metrics_dir, 'partition_staleness_p99.json')))
     staleness_p99_ms = round(staleness_p99 * 1000, 3) if staleness_p99 is not None else None
+    # Conflict-rate feed age. Same buckets as partition staleness, so the pair is
+    # directly comparable; None when the penalty mechanism is disabled (w=0).
+    signal_age_p50 = _prom_instant_value(_load_json(os.path.join(metrics_dir, 'penalty_signal_age_p50.json')))
+    signal_age_p50_ms = round(signal_age_p50 * 1000, 3) if signal_age_p50 is not None else None
+    signal_age_p99 = _prom_instant_value(_load_json(os.path.join(metrics_dir, 'penalty_signal_age_p99.json')))
+    signal_age_p99_ms = round(signal_age_p99 * 1000, 3) if signal_age_p99 is not None else None
 
     # ---- 9. Pod scheduling attempts ----
     pod_attempts_p50 = _prom_instant_value(
@@ -865,6 +871,8 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
         'sync_duration_p99_ms': sync_dur_p99_ms,
         'staleness_p50_ms': staleness_p50_ms,
         'staleness_p99_ms': staleness_p99_ms,
+        'penalty_signal_age_p50_ms': signal_age_p50_ms,
+        'penalty_signal_age_p99_ms': signal_age_p99_ms,
 
         # Pod scheduling attempts (how many tries before success)
         'pod_attempts_p50': pod_attempts_p50,
@@ -1042,6 +1050,7 @@ _AGGREGATE_FIELDS = [
     # Sync
     'sync_duration_p50_ms', 'sync_duration_p99_ms',
     'staleness_p50_ms', 'staleness_p99_ms',
+    'penalty_signal_age_p50_ms', 'penalty_signal_age_p99_ms',
     # Pod attempts
     'pod_attempts_p50', 'pod_attempts_p99',
 ]

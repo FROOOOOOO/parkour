@@ -84,9 +84,10 @@ const (
 // paraSchedFlags holds all para-sched related flags.
 // Flag values take precedence; env vars are used as fallback defaults.
 //
-// Phase 2 Refactor：原 `--parasched-enable-penalty` + `--parasched-penalty-weight`
-// 已废弃，替换为嵌套命名的 `--parasched-strategy.{name,penalty-weight,seed}`。
-// Strategy.Name=QualityFirst 配合 PenaltyWeight=0 等价于旧的 enable-penalty=false。
+// Phase 2 refactor: the former `--parasched-enable-penalty` and
+// `--parasched-penalty-weight` are deprecated, replaced by the nested
+// `--parasched-strategy.{name,penalty-weight,seed}`. Strategy.Name=QualityFirst
+// with PenaltyWeight=0 is equivalent to the old enable-penalty=false.
 var paraSchedFlags struct {
 	Name              string
 	CandidateK        int

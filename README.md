@@ -77,15 +77,17 @@ parkour/
 ├── perf-tests/             K8s perf-tests fork (ClusterLoader2)
 │
 ├── simulation/             Python discrete-event simulator
-│   ├── paraScheduling.py   Simulator core
-│   ├── scheduler.py        Per-scheduler state model
-│   ├── exp.py              Multi-parameter sweep driver
-│   ├── exp_softmax_temperature.py  Temperature sensitivity analysis
-│   └── exp_fig*.py         Figure reproduction scripts
+│   ├── core.py             Fill-simulation state machine
+│   ├── config.py           Model and case configuration
+│   ├── common/             Matrix runner, cache validation, plotting helpers
+│   ├── figures/            Self-contained figure packages (fig3-fig8)
+│   └── tests/              Engine semantics tests
 │
 ├── experiments/            Cluster experiment infrastructure
+│   ├── experiment-design.md  What each experiment board measures, and why
 │   ├── scripts/            run-experiment.sh and supporting scripts
 │   ├── kwok-setup/         KWOK node templates + ClusterLoader2 manifests
+│   ├── trace/              Offline production-trace profiling
 │   └── manifests/          Control-plane + monitoring configs
 │
 ├── docs/
@@ -102,10 +104,10 @@ parkour/
 ### Simulation (Python)
 
 - Python 3.9+
-- `numpy`, `matplotlib`, `seaborn`
+- `numpy`, `matplotlib`, `pytest`
 
 ```bash
-pip install numpy matplotlib seaborn
+pip install numpy matplotlib pytest
 ```
 
 ### Cluster Experiments (Go / Kubernetes)
@@ -125,27 +127,21 @@ pip install numpy matplotlib seaborn
 
 The simulator models parallel scheduling in a discrete-event environment. It is useful for fast exploration of how scheduler count, sync period, candidate count, and conflict-rate penalty interact.
 
+Each paper figure is a self-contained package under `simulation/figures/`, run in three steps: generate the raw cache, verify it, then plot from the hash-locked verified cache. No caches or figures are distributed; every package regenerates its own.
+
 ```bash
 cd simulation
 
-# Run a parameter sweep (results cached in data/results.json)
-python exp.py
+# Generate, verify and plot one figure
+python3 figures/fig4_conflict/run.py --jobs 8
+python3 figures/fig4_conflict/verify.py
+python3 figures/fig4_conflict/plot.py
 
-# Re-run ignoring the cache
-python exp.py --rerun
-
-# Reproduce paper figures (reads cached results)
-python exp_fig3.py
-python exp_fig4.py
-python exp_fig5.py
-python exp_fig5_merged.py
-python exp_fig6.py
-
-# Show figure interactively after saving
-python exp_fig3.py --show
+# Engine tests
+python3 -m pytest -q tests
 ```
 
-See [simulation/README.md](simulation/README.md) for full usage and parameter reference.
+Two packages read a neighbour's verified cache, so the run order matters. See [simulation/README.md](simulation/README.md) for the full workflow, the figure-to-package mapping and the model semantics.
 
 ---
 
@@ -243,8 +239,14 @@ ParKour-specific flags are prefixed with `--parasched-`:
 ## Documentation
 
 - [docs/system-design.md](docs/system-design.md) — Architecture, algorithms, data types, and design decisions
-- [simulation/README.md](simulation/README.md) — Simulation environment and usage
+- [simulation/README.md](simulation/README.md) — Simulator workflow, figure packages, and model semantics
 - [experiments/README.md](experiments/README.md) — Cluster experiment setup and reproduction steps
+- [experiments/experiment-design.md](experiments/experiment-design.md) — What each experiment board measures, its baselines, and its metric definitions
+
+No measurement results are distributed with this repository. Simulation caches
+(`simulation/figures/*/data/`), rendered figures (`simulation/figures/*/output/`)
+and cluster results (`experiments/results/`) are all generated locally and
+excluded from version control.
 
 ---
 

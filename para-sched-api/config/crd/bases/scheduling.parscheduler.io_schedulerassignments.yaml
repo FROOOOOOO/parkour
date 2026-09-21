@@ -32,7 +32,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: SchedulerAssignment 定义调度器的分区分配和 ParSync 配置
+        description: SchedulerAssignment defines the partition assignment and ParSync configuration for a scheduler.
         properties:
           apiVersion:
             description: |-
@@ -52,60 +52,59 @@ spec:
           metadata:
             type: object
           spec:
-            description: SchedulerAssignmentSpec 定义调度器分配的期望状态
+            description: SchedulerAssignmentSpec defines the desired state of a scheduler assignment.
             properties:
               assignedPartitions:
-                description: AssignedPartitions 分配给该调度器的分区列表
+                description: AssignedPartitions lists the partition IDs assigned to this scheduler.
                 items:
                   type: integer
                 type: array
               configGeneration:
-                description: ConfigGeneration 配置版本号（由 Dispatcher 递增）
+                description: ConfigGeneration is the config version number, incremented by the Dispatcher.
                 format: int64
                 minimum: 0
                 type: integer
               multiCandidateConfig:
-                description: MultiCandidateConfig 多候选配置
+                description: MultiCandidateConfig holds the multi-candidate selection configuration.
                 properties:
                   defaultK:
                     default: 3
-                    description: DefaultK 默认候选数量
+                    description: DefaultK is the default number of candidate nodes to consider.
                     maximum: 20
                     minimum: 1
                     type: integer
                   enableDynamicK:
                     default: true
-                    description: EnableDynamicK 是否启用动态 K 调整
+                    description: EnableDynamicK enables dynamic adjustment of K based on observed conflict rate.
                     type: boolean
                   enableProbabilityRanking:
                     default: true
-                    description: EnableProbabilityRanking 是否启用概率排序
+                    description: EnableProbabilityRanking enables probability-weighted candidate ranking.
                     type: boolean
                   highPriorityExtraK:
                     default: 2
-                    description: HighPriorityExtraK 高优先级 Pod 额外候选数
+                    description: HighPriorityExtraK is extra candidate slots for high-priority Pods.
                     type: integer
                   maxCandidates:
                     default: 10
-                    description: MaxCandidates 最大候选数
+                    description: MaxCandidates is the maximum number of candidates.
                     maximum: 50
                     type: integer
                   minCandidates:
                     default: 1
-                    description: MinCandidates 最小候选数
+                    description: MinCandidates is the minimum number of candidates.
                     minimum: 1
                     type: integer
                   scoreThreshold:
                     default: 85
                     description: |-
-                      ScoreThreshold 得分阈值 (0-100)，百分比形式
-                      只选择得分 >= 最高分 * (ScoreThreshold/100) 的节点
+                      ScoreThreshold (0-100) filters nodes whose score >= best_score * (ScoreThreshold/100).
                     maximum: 100
                     minimum: 0
                     type: integer
                   selectionStrategy:
                     default: QualityFirst
-                    description: SelectionStrategy 选择策略
+                    description: SelectionStrategy controls how the winning candidate is selected.
                     enum:
                     - QualityFirst
                     - LatencyFirst
@@ -114,35 +113,35 @@ spec:
                     type: string
                 type: object
               parSyncConfig:
-                description: ParSyncConfig 该调度器使用的 ParSync 配置
+                description: ParSyncConfig references the ParSync configuration used by this scheduler.
                 properties:
                   inline:
-                    description: Inline 内联配置（优先级高于 Name 引用）
+                    description: Inline is an optional inlined config that takes precedence over Name.
                     properties:
                       criticalEventTypes:
-                        description: CriticalEventTypes 需要立即同步的关键事件类型
+                        description: CriticalEventTypes lists event types that trigger an immediate sync.
                         items:
                           type: string
                         type: array
                       enableEventDriven:
                         default: true
-                        description: EnableEventDriven 是否启用事件驱动更新
+                        description: EnableEventDriven enables immediate partition updates triggered by cluster events.
                         type: boolean
                       failoverTimeout:
                         default: 15s
-                        description: FailoverTimeout 调度器故障转移超时
+                        description: FailoverTimeout is the duration after which an unresponsive scheduler triggers partition failover.
                         type: string
                       globalClockSyncEnabled:
                         default: true
-                        description: GlobalClockSyncEnabled 是否启用全局时钟同步
+                        description: GlobalClockSyncEnabled enables global clock synchronization across schedulers.
                         type: boolean
                       heartbeatInterval:
                         default: 5s
-                        description: HeartbeatInterval 心跳间隔
+                        description: HeartbeatInterval is the interval between scheduler heartbeats.
                         type: string
                       numPartitions:
                         default: 4
-                        description: NumPartitions 分区数量
+                        description: NumPartitions is the number of partitions to divide the cluster into.
                         maximum: 64
                         minimum: 1
                         type: integer
@@ -155,50 +154,50 @@ spec:
                           - MinimalMove
                           - EvenDistribution
                         default: MinimalMove
-                        description: RebalancePolicy 重平衡策略
+                        description: RebalancePolicy controls how partition assignments are rebalanced.
                         type: string
                       rebalanceThreshold:
                         default: 2
-                        description: RebalanceThreshold 触发重平衡的不均匀阈值
+                        description: RebalanceThreshold is the imbalance ratio above which rebalancing is triggered.
                         minimum: 1
                         type: integer
                       stalenessTolerance:
                         default: 5s
-                        description: StalenessTolerance 陈旧度容忍阈值
+                        description: StalenessTolerance is the maximum acceptable partition view age before a scheduler is considered stale.
                         type: string
                       syncPeriod:
                         default: 3s
-                        description: SyncPeriod 完整同步周期
+                        description: SyncPeriod is the full partition sync cycle duration.
                         type: string
                     type: object
                   name:
-                    description: Name 引用的 ParSyncConfig 名称
+                    description: Name is the referenced ParSyncConfig resource name.
                     type: string
                 required:
                 - name
                 type: object
               schedulerId:
-                description: SchedulerID 调度器数字 ID（用于同步槽位计算）
+                description: SchedulerID is the numeric scheduler ID used for sync slot calculation.
                 minimum: 0
                 type: integer
               schedulerName:
-                description: SchedulerName 调度器名称（唯一标识）
+                description: SchedulerName is the unique name of the scheduler.
                 minLength: 1
                 type: string
               syncSlots:
-                description: SyncSlots 同步时间槽分配
+                description: SyncSlots holds the sync time slot assignments for this scheduler.
                 items:
-                  description: SyncSlotSpec 同步时间槽规格
+                  description: SyncSlotSpec describes a single sync time slot.
                   properties:
                     offsetMillis:
-                      description: OffsetMillis 相对于周期起点的偏移（毫秒）
+                      description: OffsetMillis is the offset in milliseconds from the start of the sync period.
                       format: int64
                       type: integer
                     partitionId:
-                      description: PartitionID 该槽位同步的分区
+                      description: PartitionID is the partition synced in this slot.
                       type: integer
                     slotIndex:
-                      description: SlotIndex 槽位索引
+                      description: SlotIndex is the index of this sync slot.
                       type: integer
                   required:
                   - offsetMillis
@@ -214,50 +213,50 @@ spec:
             - schedulerName
             type: object
           status:
-            description: SchedulerAssignmentStatus 定义调度器分配的观察状态
+            description: SchedulerAssignmentStatus defines the observed state of a scheduler assignment.
             properties:
               appliedGeneration:
-                description: AppliedGeneration 已应用的配置版本
+                description: AppliedGeneration is the config generation last applied by this scheduler.
                 format: int64
                 type: integer
               bindingStats:
-                description: BindingStats 绑定统计
+                description: BindingStats reports binding outcome statistics for this scheduler.
                 properties:
                   avgAttempts:
-                    description: AvgAttempts 平均尝试次数
+                    description: AvgAttempts is the mean number of bind attempts per pod.
                     type: string
                   conflictCount:
-                    description: ConflictCount 冲突次数
+                    description: ConflictCount is the number of conflict-induced bind failures.
                     format: int64
                     type: integer
                   conflictRate:
-                    description: ConflictRate 冲突率
+                    description: ConflictRate is the ratio of conflict failures to total bindings.
                     type: string
                   failureCount:
-                    description: FailureCount 失败次数
+                    description: FailureCount is the number of failed binds.
                     format: int64
                     type: integer
                   lastUpdateTime:
-                    description: LastUpdateTime 最后更新时间
+                    description: LastUpdateTime is when these stats were last updated.
                     format: date-time
                     type: string
                   rankAdoptionCounts:
-                    description: RankAdoptionCounts 各排名采纳次数
+                    description: RankAdoptionCounts is the per-rank adoption histogram (index = rank chosen).
                     items:
                       format: int64
                       type: integer
                     type: array
                   successCount:
-                    description: SuccessCount 成功次数
+                    description: SuccessCount is the number of successful binds.
                     format: int64
                     type: integer
                   totalBindings:
-                    description: TotalBindings 总绑定次数
+                    description: TotalBindings is the total number of bind attempts.
                     format: int64
                     type: integer
                 type: object
               conditions:
-                description: Conditions 状态条件
+                description: Conditions holds standard Kubernetes condition values.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -314,37 +313,37 @@ spec:
                   type: object
                 type: array
               lastHeartbeat:
-                description: LastHeartbeat 最后心跳时间
+                description: LastHeartbeat is the timestamp of the most recent heartbeat.
                 format: date-time
                 type: string
               partitionSyncStatus:
-                description: PartitionSyncStatus 各分区同步状态
+                description: PartitionSyncStatus holds per-partition sync status.
                 items:
-                  description: PartitionSyncStatusItem 分区同步状态项
+                  description: PartitionSyncStatusItem holds the sync status for a single partition.
                   properties:
                     lastSyncTime:
-                      description: LastSyncTime 最后同步时间
+                      description: LastSyncTime is when the partition was last synced.
                       format: date-time
                       type: string
                     nodeCount:
-                      description: NodeCount 分区内节点数
+                      description: NodeCount is the number of nodes in this partition.
                       type: integer
                     partitionId:
-                      description: PartitionID 分区 ID
+                      description: PartitionID identifies the partition.
                       type: integer
                     stalenessSeconds:
-                      description: StalenessSeconds 陈旧度（秒）
+                      description: StalenessSeconds is the partition view age in seconds at the last check.
                       type: string
                     syncFailureCount:
-                      description: SyncFailureCount 同步失败次数
+                      description: SyncFailureCount is the cumulative failed sync count.
                       format: int64
                       type: integer
                     syncGeneration:
-                      description: SyncGeneration 同步版本号
+                      description: SyncGeneration is the sync generation counter for this partition.
                       format: int64
                       type: integer
                     syncSuccessCount:
-                      description: SyncSuccessCount 同步成功次数
+                      description: SyncSuccessCount is the cumulative successful sync count.
                       format: int64
                       type: integer
                   required:
@@ -353,7 +352,7 @@ spec:
                 type: array
               phase:
                 default: Pending
-                description: Phase 调度器阶段
+                description: Phase is the current lifecycle phase of the scheduler.
                 enum:
                 - Pending
                 - Initializing

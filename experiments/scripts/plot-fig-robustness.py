@@ -3,11 +3,10 @@
 Paper Figure: Parameter Robustness (RQ §5.6).
 
 Layout: 1 row x 2 columns.
-  Left  (K-sweep): ACF vs K in {0, 1, 2, 4} at fixed w=0.3.
-                    Lines: Event-diff, Periodic-glob (P4 env),
-                           Periodic-same, Periodic-diff.
+  Left  (K-sweep): ACF vs candidate list length K in {1, 2, 3, 5} at w=0.3.
+                    Lines: Event-driven, Periodic, sameSync, diffSync.
   Right (w-sweep): ACF vs w in {0, 0.1, 0.3, 0.5, 0.7} at fixed K=4.
-                    Lines: Periodic-glob, Periodic-same, Periodic-diff.
+                    Lines: Event-driven, Periodic, sameSync, diffSync.
 
 Star markers highlight the simulation-recommended defaults (K=2, w=0.5).
 The visual story is "any K>=1 and any w>=0.1 yields large ACF reduction across
@@ -50,7 +49,10 @@ C_PER_DIFF   = "#a6dba0"   # light green(periodic/diff)
 C_DEFAULT    = "#d73027"   # red star highlight for sim default
 
 # ---------------------------------------------------------------------------
-#  Style
+#  Style — fonttype 42 keeps the PDF/PS text as embedded TrueType subsets.
+#  Matplotlib defaults to Type 3, which ACM camera-ready rejects and which
+#  also leaves the figure text unsearchable. The w panel's mathtext label
+#  ($w$) is affected too, so this covers the italic face as well.
 # ---------------------------------------------------------------------------
 RC_PARAMS = {
     "font.size":           9,
@@ -62,6 +64,18 @@ RC_PARAMS = {
     "axes.linewidth":      0.8,
     "lines.linewidth":     1.4,
     "lines.markersize":    3.5,
+    "pdf.fonttype":        42,
+    "ps.fonttype":         42,
+    "svg.fonttype":        "none",
+    # Arial for text and mathtext alike. Left alone, the family arrives only
+    # as a side effect of seaborn's style dict and mathtext keeps its own
+    # DejaVu set, so the $K$ and $w$ axis labels render in a different face.
+    "font.family":         "sans-serif",
+    "font.sans-serif":     ["Arial", "Helvetica", "DejaVu Sans"],
+    "mathtext.fontset":    "custom",
+    "mathtext.rm":         "Arial",
+    "mathtext.it":         "Arial:italic",
+    "mathtext.bf":         "Arial:bold",
 }
 
 # ---------------------------------------------------------------------------
@@ -69,7 +83,11 @@ RC_PARAMS = {
 # ---------------------------------------------------------------------------
 
 # K-sweep (w=0.3 fixed)
+# Simulator backup counts. The paper counts the whole candidate list, so the
+# axis is plotted at K = backups + 1; only the x positions/labels shift, the
+# measured series are untouched.
 K_X        = [0, 1, 2, 4]
+K_X_PAPER  = [k + 1 for k in K_X]
 K_E_DIFF   = [0.0611, 0.0220, 0.0118, 0.0073]
 K_P_GLOB   = [0.3072, 0.1457, 0.1008, 0.0687]
 K_P_SAME   = [0.4972, 0.3780, 0.2910, 0.1403]
@@ -88,7 +106,7 @@ W_P_DIFF   = [0.4157, 0.1661, 0.1451, 0.1530, 0.1464]
 # ---------------------------------------------------------------------------
 
 def _draw_k_panel(ax):
-    x = np.array(K_X, dtype=float)
+    x = np.array(K_X_PAPER, dtype=float)
 
     ax.plot(x, K_E_DIFF, color=C_EVENT,    marker="o", markerfacecolor="white")
     ax.plot(x, K_P_GLOB, color=C_PER_GLOB, marker="s")
@@ -96,9 +114,9 @@ def _draw_k_panel(ax):
     ax.plot(x, K_P_DIFF, color=C_PER_DIFF, marker="D")
 
     ax.set_xticks(x)
-    ax.set_xticklabels([str(v) for v in K_X])
-    ax.set_xlabel("$K$ (multi-candidate)")
-    ax.set_ylabel("Conflict rate (ACF)")
+    ax.set_xticklabels([str(v) for v in K_X_PAPER])
+    ax.set_xlabel("Candidate list length $K$")
+    ax.set_ylabel("ACF rate")
     ax.yaxis.set_major_formatter(PercentFormatter(1.0, decimals=0))
     ax.set_ylim(-0.02, 0.6)
     ax.grid(True, linestyle="--", alpha=0.45, linewidth=0.6)
@@ -114,7 +132,7 @@ def _draw_w_panel(ax):
 
     ax.set_xticks(x)
     ax.set_xticklabels([f"{v:g}" for v in W_X])
-    ax.set_xlabel("$w$ (penalty weight)")
+    ax.set_xlabel("Feedback rate $w$")
     ax.yaxis.set_major_formatter(PercentFormatter(1.0, decimals=0))
     ax.set_ylim(-0.02, 0.6)
     ax.grid(True, linestyle="--", alpha=0.45, linewidth=0.6)
@@ -128,10 +146,10 @@ def build_figure():
     sns.set_style("ticks")
     plt.rcParams.update(RC_PARAMS)
 
-    fig = plt.figure(figsize=(3.5, 1.95))
+    fig = plt.figure(figsize=(3.5, 1.75))
     gs = GridSpec(1, 2, figure=fig, width_ratios=[0.5, 0.5],
                   wspace=0.30,
-                  left=0.12, right=0.97, top=0.78, bottom=0.20)
+                  left=0.12, right=0.97, top=0.82, bottom=0.21)
 
     ax_k = fig.add_subplot(gs[0, 0])
     ax_w = fig.add_subplot(gs[0, 1])
@@ -142,20 +160,20 @@ def build_figure():
     # Suppress redundant y-tick labels on right panel
     ax_w.set_yticklabels([])
 
-    # Shared legend (top, 2 rows)
+    # Shared legend, one row
     h_event   = mlines.Line2D([], [], color=C_EVENT,    marker="o",
                               markerfacecolor="white", linewidth=1.4,
-                              label="vanilla-E")
+                              label="Event-driven")
     h_p_glob  = mlines.Line2D([], [], color=C_PER_GLOB, marker="s",
-                              linewidth=1.4, label="vanilla-P")
+                              linewidth=1.4, label="Periodic")
     h_p_same  = mlines.Line2D([], [], color=C_PER_SAME, marker="^",
                               linewidth=1.4, label="sameSync")
     h_p_diff  = mlines.Line2D([], [], color=C_PER_DIFF, marker="D",
                               linewidth=1.4, label="diffSync")
     fig.legend(handles=[h_event, h_p_glob, h_p_same, h_p_diff],
-               loc=(0.2, 0.85), ncol=4,
-               columnspacing=0.8, handlelength=1.4,
-               handletextpad=0.3, frameon=False, fontsize=7.5)
+               loc="upper center", bbox_to_anchor=(0.5, 0.99), ncol=4,
+               columnspacing=0.8, handlelength=1.3,
+               handletextpad=0.25, frameon=False, fontsize=7.0)
 
     return fig
 

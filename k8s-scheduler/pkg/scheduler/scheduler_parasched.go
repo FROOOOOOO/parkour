@@ -83,7 +83,7 @@ type paraSchedConfig struct {
 	// Feature toggles.
 	enableMultiCandidate bool
 	candidateK           int     // number of backup candidates
-	penaltyWeight        float64 // Penalty 公式中的 p ∈ [0,1]
+	penaltyWeight        float64 // p in [0,1] of the penalty formula
 
 	// Strategy name (QualityFirst / LatencyFirst / WeightedRandom).
 	strategyName string

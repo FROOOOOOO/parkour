@@ -651,6 +651,15 @@ func (w *adoptionStatsWatcher) handleUpdate(obj interface{}) {
 		rates[nodeName] = globalConflictRate
 	}
 
+	// Record how old the conflict-rate feed already is when we install it.
+	// Deliberately observed here rather than in GetNodeConflictRate: this
+	// mirrors ParaSchedPartitionStaleness (observed when a snapshot is
+	// applied), so the two pipelines are measured under the same convention,
+	// and it keeps the per-node scoring path free of instrumentation.
+	if status.LastUpdateTime != nil {
+		schedmetrics.ParaSchedPenaltySignalAge.Observe(time.Since(status.LastUpdateTime.Time).Seconds())
+	}
+
 	w.sched.UpdateConflictRates(rates)
 
 	klog.V(4).InfoS("Updated conflict rates from AdoptionStats",

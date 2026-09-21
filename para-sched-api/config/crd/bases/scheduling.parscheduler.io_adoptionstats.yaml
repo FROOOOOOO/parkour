@@ -32,7 +32,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: AdoptionStats 定义采纳统计
+        description: AdoptionStats defines cross-scheduler adoption statistics.
         properties:
           apiVersion:
             description: |-
@@ -52,64 +52,64 @@ spec:
           metadata:
             type: object
           spec:
-            description: AdoptionStatsSpec 定义采纳统计的期望状态
+            description: AdoptionStatsSpec defines the desired state of an AdoptionStats resource.
             properties:
               aggregationInterval:
                 default: 10s
-                description: AggregationInterval 聚合间隔
+                description: AggregationInterval is how often adoption counts are aggregated.
                 type: string
               decayFactor:
                 default: "0.95"
-                description: DecayFactor 衰减因子
+                description: DecayFactor is the per-interval exponential decay multiplier applied to counters.
                 type: string
               maxCandidates:
                 default: 10
-                description: MaxCandidates 最大候选数（决定统计数组大小）
+                description: MaxCandidates is the maximum candidate count (determines the stats array size).
                 maximum: 50
                 minimum: 1
                 type: integer
               parSyncConfigRef:
-                description: ParSyncConfigRef 关联的 ParSync 配置
+                description: ParSyncConfigRef names the ParSyncConfig this resource is associated with.
                 type: string
               retentionPeriod:
                 default: 1h
-                description: RetentionPeriod 数据保留周期
+                description: RetentionPeriod is how long historical adoption data is retained.
                 type: string
             required:
             - parSyncConfigRef
             type: object
           status:
-            description: AdoptionStatsStatus 定义采纳统计的观察状态
+            description: AdoptionStatsStatus defines the observed adoption statistics.
             properties:
               avgAttempts:
-                description: AvgAttempts 平均尝试次数
+                description: AvgAttempts is the mean number of bind attempts per pod.
                 type: string
               conflictRate:
-                description: ConflictRate 冲突率（字符串形式，如 "0.15"）
+                description: ConflictRate is the aggregate conflict rate as a decimal string (e.g. "0.15").
                 type: string
               contributingSchedulers:
-                description: ContributingSchedulers 贡献数据的调度器列表
+                description: ContributingSchedulers lists the scheduler names that have contributed data to this resource.
                 items:
                   type: string
                 type: array
               failureCount:
-                description: FailureCount 失败次数
+                description: FailureCount is the number of failed binds.
                 format: int64
                 type: integer
               globalCounts:
                 description: |-
-                  GlobalCounts 全局采纳计数向量
-                  索引 i 表示第 i 个候选被采纳的次数，最后一个是全部失败的次数
+                  GlobalCounts is the global adoption histogram; index i = times the i-th candidate was chosen;
+                  the last element counts total failures.
                 items:
                   format: int64
                   type: integer
                 type: array
               lastDecayTime:
-                description: LastDecayTime 最后衰减时间
+                description: LastDecayTime is when decay was last applied to the counters.
                 format: date-time
                 type: string
               lastUpdateTime:
-                description: LastUpdateTime 最后更新时间
+                description: LastUpdateTime is when these stats were last updated.
                 format: date-time
                 type: string
               nodeCounts:
@@ -119,14 +119,13 @@ spec:
                     type: integer
                   type: array
                 description: |-
-                  NodeCounts 节点级 [attempts, conflicts] 计数，用于 Scheduler 的 Penalty 机制
-                  按节点差异化打分。每个 value 是长度为 2 的 int64 切片：
-                    [0] = attempts  = 该节点上发起过的 bind 总次数 (success + failure)
-                    [1] = conflicts = 该节点上失败的 bind 次数（任一次 bind conflict 即 ++）
+                  NodeCounts maps node names to [attempts, conflicts] pairs for the Scheduler's Penalty mechanism:
+                    [0] = attempts  = total bind attempts on this node (success + failure)
+                    [1] = conflicts = bind failures on this node (incremented on any conflict)
 
-                  稀疏写入：只包含 conflicts > 0 的节点；scheduler 端对未出现的节点默认 0 冲突率。
-                  两个计数都通过 AdoptionStatsCache.Decay 按 DecayFactor 等比衰减（默认 0.95/1min），
-                  体现"近期为重"的统计语义。Scheduler 端直接用 conflicts/attempts 作为 per-node 冲突率。
+                  Sparse: only nodes with conflicts > 0 are stored; absent nodes default to 0 conflict rate.
+                  Both counters are exponentially decayed by DecayFactor on each interval (default 0.95/1min),
+                  prioritising recent observations. Schedulers derive per-node conflict rate as conflicts/attempts.
                 type: object
               partitionCounts:
                 additionalProperties:
@@ -135,18 +134,17 @@ spec:
                     type: integer
                   type: array
                 description: |-
-                  PartitionCounts 分区级采纳计数
-                  key 是分区 ID 的字符串形式
+                  PartitionCounts maps string partition IDs to per-partition adoption count vectors.
                 type: object
               recentSuccessRate:
-                description: RecentSuccessRate 近期成功率（滑动窗口）
+                description: RecentSuccessRate is the recent bind success rate from a sliding window.
                 type: string
               successCount:
-                description: SuccessCount 成功次数
+                description: SuccessCount is the number of successful binds.
                 format: int64
                 type: integer
               totalBindings:
-                description: TotalBindings 总绑定次数
+                description: TotalBindings is the total number of bind attempts.
                 format: int64
                 type: integer
             type: object

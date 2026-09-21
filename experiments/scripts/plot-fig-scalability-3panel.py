@@ -22,11 +22,12 @@ import warnings
 from collections import defaultdict
 
 import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from matplotlib.gridspec import GridSpec
-from matplotlib.ticker import PercentFormatter
+from matplotlib.ticker import MaxNLocator, PercentFormatter
 
 warnings.filterwarnings("ignore", message=".*iCCP.*")
 
@@ -58,9 +59,18 @@ C_RED_L = "#{:02x}{:02x}{:02x}".format(
 C_GREEN_D = "#238b45"
 C_GREEN_L = "#74c476"
 C_PURPLE  = "#A78AB8"  # Godel baseline — light purple, static-partitioning
+# Shared with plot-fig-occupancy-intervals.py (Fig 14) and
+# plot-fig-dataplane-sensitivity.py (Fig 17) so the bar charts match.
+C_EDGE = "#333333"
+BAR_ALPHA = 0.9
+LW_TPUT = 1.3
+MS_TPUT = 3.6
+MEW_TPUT = 0.9
 
 # ---------------------------------------------------------------------------
-#  Style
+#  Style — fonttype 42 keeps the PDF/PS text as embedded TrueType subsets.
+#  Matplotlib defaults to Type 3, which ACM camera-ready rejects and which
+#  also leaves the figure text unsearchable.
 # ---------------------------------------------------------------------------
 RC_PARAMS = {
     "font.size": 9,
@@ -72,6 +82,18 @@ RC_PARAMS = {
     "axes.linewidth": 0.8,
     "lines.linewidth": 1.4,
     "lines.markersize": 2.5,
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
+    "svg.fonttype": "none",
+    # Arial for text and mathtext alike. Left alone, the family arrives only
+    # as a side effect of seaborn's style dict and mathtext keeps its own
+    # DejaVu set, so the $1\,000$ tick labels render in a different face.
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+    "mathtext.fontset": "custom",
+    "mathtext.rm": "Arial",
+    "mathtext.it": "Arial:italic",
+    "mathtext.bf": "Arial:bold",
 }
 
 LW = 1.4
@@ -83,7 +105,8 @@ ALPHA_BAND = 0.12
 
 # B1: low-contention scaling
 B1_X = [1000, 2000, 5000]
-B1_X_LABELS = ["1K", "2K", "5K"]
+# Thin-space thousands separator, matching the paper body.
+B1_X_LABELS = [r"$1\,000$", r"$2\,000$", r"$5\,000$"]
 B1_EXP = {
     "single": ["B1-1000n-E1", "B1-2000n-E1", "B1-5000n-E1"],
     "vanilla-E": ["B1-1000n-E2", "B1-2000n-E2", "B1-5000n-E2"],
@@ -238,145 +261,137 @@ def _draw_b1(ax, stats):
 
     ax.set_xticks(xpos)
     ax.set_xticklabels(B1_X_LABELS)
-    ax.set_title("(a)")
     ax.set_xlabel("Cluster size (nodes)")
-    ax.set_ylabel("TP (pods/s)")
+    ax.set_ylabel("Throughput (pods/s)")
     ax.grid(True, linestyle="--", alpha=0.45, linewidth=0.6)
     ax.set_axisbelow(True)
 
 
-def _draw_b3_tput(ax):
-    x = np.array(B3_X, dtype=float)
+def _draw_paradigm(ax, series, *, title, show_xticklabels, tput_top):
+    """One paradigm panel: ACF as grouped bars (left), throughput as dotted
+    lines with open markers (right).
 
-    # Shaded gap: ParKour-P advantage over vanilla-P in throughput.
-    ax.fill_between(x, B3_P1_TPUT, B3_P4_TPUT,
-                    color=C_GREEN_L, alpha=0.18, linewidth=0, zorder=1)
+    Splitting the two paradigms into separate panels means colour no longer has
+    to carry the paradigm, so one colour per system suffices and the throughput
+    marker sits directly above the bar it belongs to.
+    """
+    ax2 = ax.twinx()
+    x = np.arange(len(B3_X), dtype=float)
+    width = 0.78 / len(series)
 
-    ax.plot(x, B3_E2_TPUT, color=C_RED_D, linestyle="-", linewidth=LW,
-            marker="o", markersize=3.5, markerfacecolor="white", zorder=3)
-    ax.plot(x, B3_E3_TPUT, color=C_GREEN_D, linestyle="-", linewidth=LW,
-            marker="o", markersize=3.5, zorder=3)
-    ax.plot(x, B3_P1_TPUT, color=C_RED_L, linestyle="-", linewidth=LW,
-            marker="s", markersize=3.5, markerfacecolor="white", zorder=3)
-    ax.plot(x, B3_P4_TPUT, color=C_GREEN_L, linestyle="-", linewidth=LW,
-            marker="s", markersize=3.5, zorder=3)
-    ax.plot(x, B3_GODEL_TPUT, color=C_PURPLE, linestyle="-", linewidth=LW,
-            marker="^", markersize=3.5, markerfacecolor="white", zorder=3)
-
-    ax.set_xticks(x)
-    ax.set_xticklabels([str(v) for v in B3_X])
-    ax.set_title("(b)")
-    ax.set_xlabel("Number of schedulers")
-    ax.set_ylabel("TP (pods/s)")
-    ax.grid(True, linestyle="--", alpha=0.45, linewidth=0.6)
-    ax.set_axisbelow(True)
-
-
-def _draw_b3_acf(ax):
-    x = np.array(B3_X, dtype=float)
-
-    # Horizontal band: mark ParKour-P's stable operating range [min, max].
-    # Vanilla-P fluctuates wildly (24–58%) while ParKour-P stays within
-    # this bounded corridor regardless of N — that is the message.
-    p4_lo, p4_hi = min(B3_P4_ACF), max(B3_P4_ACF)
-    ax.axhspan(p4_lo, p4_hi, color=C_GREEN_L, alpha=0.20, linewidth=0, zorder=1)
-
-    ax.plot(x, B3_E2_ACF, color=C_RED_D, linestyle="-", linewidth=LW,
-            marker="o", markersize=3.5, markerfacecolor="white", zorder=3)
-    ax.plot(x, B3_E3_ACF, color=C_GREEN_D, linestyle="-", linewidth=LW,
-            marker="o", markersize=3.5, zorder=3)
-    ax.plot(x, B3_P1_ACF, color=C_RED_L, linestyle="-", linewidth=LW,
-            marker="s", markersize=3.5, markerfacecolor="white", zorder=3)
-    ax.plot(x, B3_P4_ACF, color=C_GREEN_L, linestyle="-", linewidth=LW,
-            marker="s", markersize=3.5, zorder=3)
-    ax.plot(x, B3_GODEL_ACF, color=C_PURPLE, linestyle="-", linewidth=LW,
-            marker="^", markersize=3.5, markerfacecolor="white", zorder=3)
+    for index, (_, color, acf, tput) in enumerate(series):
+        offset = (index - (len(series) - 1) / 2.0) * width
+        ax.bar(x + offset, acf, width=width, color=color,
+               edgecolor=C_EDGE, linewidth=0.4, alpha=BAR_ALPHA, zorder=2)
+        ax2.plot(x + offset, tput, color=color, linestyle=":",
+                 linewidth=LW_TPUT, marker="o", markersize=MS_TPUT,
+                 markerfacecolor="white", markeredgecolor=C_EDGE,
+                 markeredgewidth=MEW_TPUT, zorder=3)
 
     ax.set_xticks(x)
-    ax.set_xticklabels([str(v) for v in B3_X])
-    ax.set_title("(c)")
-    ax.set_xlabel("Number of schedulers")
+    ax.set_xticklabels([str(v) for v in B3_X] if show_xticklabels else [])
     ax.set_ylabel("ACF rate")
     ax.yaxis.set_major_formatter(PercentFormatter(1.0, decimals=0))
-    ax.set_ylim(-0.02, 0.66)
-    ax.grid(True, linestyle="--", alpha=0.45, linewidth=0.6)
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=4))
+    # Headroom so the tallest bar does not sit above the last labelled tick.
+    ax.set_ylim(0, max(max(acf) for _, _, acf, _ in series) * 1.18)
+    ax.grid(True, axis="y", linestyle="--", alpha=0.45, linewidth=0.6)
     ax.set_axisbelow(True)
+    ax.set_title(title, loc="left", pad=3)
+
+    ax2.set_ylabel("Throughput\n(pods/s)")
+    ax2.yaxis.set_major_locator(MaxNLocator(nbins=4))
+    # Shared across panels so throughput is comparable between paradigms; the
+    # ACF axes stay independent because the two ranges differ by an order of
+    # magnitude, which is itself the result.
+    ax2.set_ylim(0, tput_top)
 
 
-# ---------------------------------------------------------------------------
-#  Build figure
-# ---------------------------------------------------------------------------
-
-def build_figure():
+def build_lowcontention_figure():
+    """Standalone low-contention panel, formerly Figure 12(a)."""
     sns.set_style("ticks")
     plt.rcParams.update(RC_PARAMS)
-    b1 = _b1_stats()
-
-    fig = plt.figure(figsize=(7.0, 2.0))
-    gs = GridSpec(
-        1,
-        3,
-        figure=fig,
-        width_ratios=[2, 3, 3],
-        wspace=0.42,
-        left=0.06,
-        right=0.985,
-        top=0.82,
-        bottom=0.24,
-    )
-
-    ax_b1 = fig.add_subplot(gs[0, 0])
-    ax_tput = fig.add_subplot(gs[0, 1])
-    ax_acf = fig.add_subplot(gs[0, 2])
-
-    _draw_b1(ax_b1, b1)
-    _draw_b3_tput(ax_tput)
-    _draw_b3_acf(ax_acf)
-
-    h_single = mlines.Line2D(
-        [], [], color=C_GREY, marker="D", markersize=3.5,
-        markerfacecolor="white", linewidth=LW, label="single",
-    )
-    h_v_e = mlines.Line2D(
-        [], [], color=C_RED_D, marker="o", markersize=3.5,
-        markerfacecolor="white", linewidth=LW, label="vanilla-E",
-    )
-    h_pk_e = mlines.Line2D(
-        [], [], color=C_GREEN_D, marker="o", markersize=3.5,
-        linewidth=LW, label="ParKour-E",
-    )
-    h_v_p = mlines.Line2D(
-        [], [], color=C_RED_L, marker="s", markersize=3.5,
-        markerfacecolor="white", linewidth=LW, label="vanilla-P",
-    )
-    h_pk_p = mlines.Line2D(
-        [], [], color=C_GREEN_L, marker="s", markersize=3.5,
-        linewidth=LW, label="ParKour-P",
-    )
-    h_godel = mlines.Line2D(
-        [], [], color=C_PURPLE, marker="^", markersize=3.5,
-        markerfacecolor="white", linewidth=LW, label="Godel",
-    )
-
+    fig = plt.figure(figsize=(3.4, 1.62))
+    ax = fig.add_subplot(111)
+    _draw_b1(ax, _b1_stats())
     fig.legend(
-        handles=[h_single, h_v_e, h_pk_e, h_v_p, h_pk_p, h_godel],
-        loc=(0.22, 0.9),
-        ncol=6,
-        frameon=False,
-        fontsize=7,
-        columnspacing=0.8,
-        handlelength=1.3,
-        handletextpad=0.35,
+        handles=[
+            mlines.Line2D([], [], color=C_GREY, marker="D", markersize=3.5,
+                          markerfacecolor="white", linewidth=LW, label="single"),
+            mlines.Line2D([], [], color=C_RED_D, marker="o", markersize=3.5,
+                          markerfacecolor="white", linewidth=LW, label="Vanilla"),
+            mlines.Line2D([], [], color=C_GREEN_D, marker="o", markersize=3.5,
+                          linewidth=LW, label="ParKour"),
+            mlines.Line2D([], [], color=C_PURPLE, marker="^", markersize=3.5,
+                          markerfacecolor="white", linewidth=LW, label="Gödel"),
+        ],
+        loc="upper center", bbox_to_anchor=(0.5, 1.02), ncol=4, frameon=False,
+        fontsize=6.5, columnspacing=1.0, handlelength=1.3, handletextpad=0.35,
     )
-
+    fig.subplots_adjust(left=0.17, right=0.985, top=0.80, bottom=0.21)
     return fig
 
 
-def save(fig):
+def build_scheduler_figure():
+    """Scheduler-count sweep, one panel per synchronization paradigm."""
+    sns.set_style("ticks")
+    plt.rcParams.update(RC_PARAMS)
+    fig = plt.figure(figsize=(3.4, 3.05))
+    gs = GridSpec(2, 1, figure=fig, hspace=0.24,
+                  # Legend is three rows now (five method entries plus throughput), so the
+                  # top margin grows; the figure height is held to avoid a page cost.
+                  left=0.17, right=0.80, top=0.795, bottom=0.13)
+    ax_event = fig.add_subplot(gs[0, 0])
+    ax_periodic = fig.add_subplot(gs[1, 0])
+    tput_top = max(B3_E2_TPUT + B3_E3_TPUT + B3_GODEL_TPUT
+                   + B3_P1_TPUT + B3_P4_TPUT) * 1.12
+
+    _draw_paradigm(
+        ax_event,
+        [("Vanilla", C_RED_D, B3_E2_ACF, B3_E2_TPUT),
+         ("ParKour", C_GREEN_D, B3_E3_ACF, B3_E3_TPUT),
+         ("Gödel", C_PURPLE, B3_GODEL_ACF, B3_GODEL_TPUT)],
+        title="(a) Event-driven", show_xticklabels=False, tput_top=tput_top,
+    )
+    _draw_paradigm(
+        ax_periodic,
+        # Light shades for periodic, matching the dark/light paradigm
+        # convention used by Fig 14 and Fig 17.
+        [("Vanilla", C_RED_L, B3_P1_ACF, B3_P1_TPUT),
+         ("ParKour", C_GREEN_L, B3_P4_ACF, B3_P4_TPUT)],
+        title="(b) Periodic", show_xticklabels=True, tput_top=tput_top,
+    )
+    ax_periodic.set_xlabel("Number of schedulers")
+
+    fig.legend(
+        handles=[
+            mpatches.Patch(facecolor=C_RED_D, edgecolor=C_EDGE, linewidth=0.4,
+                           alpha=BAR_ALPHA, label="Vanilla (event-driven)"),
+            mpatches.Patch(facecolor=C_RED_L, edgecolor=C_EDGE, linewidth=0.4,
+                           alpha=BAR_ALPHA, label="Vanilla (periodic)"),
+            mpatches.Patch(facecolor=C_GREEN_D, edgecolor=C_EDGE, linewidth=0.4,
+                           alpha=BAR_ALPHA, label="ParKour (event-driven)"),
+            mpatches.Patch(facecolor=C_GREEN_L, edgecolor=C_EDGE, linewidth=0.4,
+                           alpha=BAR_ALPHA, label="ParKour (periodic)"),
+            mpatches.Patch(facecolor=C_PURPLE, edgecolor=C_EDGE, linewidth=0.4,
+                           alpha=BAR_ALPHA, label="Gödel"),
+            mlines.Line2D([], [], color="#555555", linestyle=":",
+                          linewidth=LW_TPUT, marker="o", markersize=MS_TPUT,
+                          markerfacecolor="white", markeredgecolor=C_EDGE,
+                          markeredgewidth=MEW_TPUT,
+                          label="Throughput (right axis)"),
+        ],
+        loc="upper center", bbox_to_anchor=(0.5, 1.0), ncol=2, frameon=False,
+        fontsize=6.5, columnspacing=1.0, handlelength=1.3, handletextpad=0.35,
+    )
+    return fig
+
+
+def save(fig, stem):
     os.makedirs(FIG_DIR, exist_ok=True)
     paths = []
     for ext in ("pdf", "svg"):
-        p = os.path.join(FIG_DIR, f"eval-main.{ext}")
+        p = os.path.join(FIG_DIR, f"{stem}.{ext}")
         fig.savefig(p, bbox_inches="tight", pad_inches=0)
         paths.append(p)
     print(f"Saved: {', '.join(paths)}")
@@ -384,15 +399,12 @@ def save(fig):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(
-        description="Paper Figure - scalability summary (1x3, 2:3:3)"
+        description="Paper figures - low-contention scaling and scheduler sweep"
     )
     ap.add_argument("--show", action="store_true",
                     help="Display interactively after saving")
     args = ap.parse_args()
-
-    fig = build_figure()
-    save(fig)
+    save(build_lowcontention_figure(), "scalability-lowcontention")
+    save(build_scheduler_figure(), "scalability-schedulers")
     if args.show:
         plt.show()
-    else:
-        plt.close(fig)

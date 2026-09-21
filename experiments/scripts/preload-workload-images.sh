@@ -43,11 +43,11 @@ DEFAULT_IMAGES=(
     "mysql:8.0"
 )
 DEFAULT_WORKERS=(
-    "${MASTER_IP:-<MASTER_IP>}"
-    "${MASTER_IP:-<MASTER_IP>}"
-    "<WORKER_IP>"
+    "<WORKER1_IP>"
+    "<WORKER2_IP>"
+    "<WORKER3_IP>"
 )
-SSH_USER="${SSH_USER:-clsd}"
+SSH_USER="${SSH_USER:-<user>}"
 SSH_OPTS="${SSH_OPTS:--o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10}"
 
 IMAGES=()

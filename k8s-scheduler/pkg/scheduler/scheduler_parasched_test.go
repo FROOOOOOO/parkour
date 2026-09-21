@@ -84,9 +84,9 @@ func TestEnableParaSched(t *testing.T) {
 
 // ---- conflict-rate penalty (via strategy layer) ----
 //
-// 公式：adjusted = (1-p) * normalized_score + p * (1 - conflictRate)
-// 入参按 Score 降序传入 selectCandidates，strategy 按 adjusted 重排并分配
-// Rank。Primary = candidates[0]。
+// Formula: adjusted = (1-p) * normalized_score + p * (1 - conflictRate)
+// Inputs are passed to selectCandidates in descending Score order; the strategy
+// reorders by adjusted and assigns Rank. Primary = candidates[0].
 
 // TestSelectCandidates_PenaltyDisabled verifies that when the penalty feature
 // flag is off, candidates come out in pure Score order regardless of conflict

@@ -136,12 +136,18 @@ bin/dispatcher
 bin/binder
 bin/para-sched-api
 
-# Experimental results
+# Experimental results — generated locally, never committed
 figs/
+paper/
 experiments/results/
-simulation/data/
+experiments/trace/*/figures/
 paper_data*.csv
 paper_data*.json
+
+# Simulation caches and rendered figures (each package regenerates its own)
+simulation/data/
+simulation/figures/**/data/
+simulation/figures/**/output/
 
 # =============================================================================
 # IDE

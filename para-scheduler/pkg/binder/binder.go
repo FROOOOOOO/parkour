@@ -43,6 +43,11 @@ type Binder struct {
 	// Injected after Informer factory is created (see SetPodLister).
 	podLister listersv1.PodLister
 
+	// feasibility is the ordered rule chain evaluated against each candidate
+	// node before its bind is attempted. NewBinder installs
+	// DefaultFeasibilityRules; SetFeasibilityRules replaces it.
+	feasibility FeasibilityRules
+
 	// [ParSync] snapshot publisher (nil when not in ParSync mode)
 	snapshotPublisher *SnapshotPublisher
 
@@ -57,12 +62,27 @@ func NewBinder(
 	binderCache *bindercache.BinderCache,
 ) *Binder {
 	return &Binder{
-		client:    client,
-		crdClient: crdClient,
-		cache:     binderCache,
+		client:      client,
+		crdClient:   crdClient,
+		cache:       binderCache,
+		feasibility: DefaultFeasibilityRules(),
 		queue: workqueue.NewRateLimitingQueue(
 			workqueue.NewItemExponentialFailureRateLimiter(100*time.Millisecond, 30*time.Second)),
 	}
+}
+
+// SetFeasibilityRules replaces the commit-time feasibility chain evaluated
+// against each candidate node. Must be called before Run.
+//
+// Returns an error when rules is empty: an empty chain rejects every candidate
+// (see FeasibilityRules.Check), which is never a useful configuration. To admit
+// every candidate, supply a rule that does so explicitly.
+func (b *Binder) SetFeasibilityRules(rules FeasibilityRules) error {
+	if len(rules) == 0 {
+		return fmt.Errorf("feasibility rule chain must not be empty")
+	}
+	b.feasibility = rules
+	return nil
 }
 
 // SetPodLister injects the Pod lister used to look up pods by key.
@@ -151,7 +171,7 @@ func (b *Binder) processQueueItem(ctx context.Context, key string) error {
 // This is the core Binder logic:
 //  1. Decode candidate list from annotation
 //  2. For each candidate in rank order:
-//     a. Check conflict (resource fit)
+//     a. Check feasibility (default rule: resource fit)
 //     b. Assume pod on node (optimistic)
 //     c. Call bind API
 //     d. On failure: forget pod, try next candidate
@@ -226,8 +246,9 @@ func (b *Binder) ProcessPod(ctx context.Context, pod *v1.Pod) error {
 			continue
 		}
 
-		// b. Check conflict (resource fit).
-		fits, reason := CheckConflict(pod, nodeInfo)
+		// b. Check feasibility against the Binder's running account of
+		//    admitted requests.
+		fits, reason := b.feasibility.Check(pod, nodeInfo)
 		if !fits {
 			klog.V(4).InfoS("Candidate node conflict",
 				"pod", podKey, "node", candidate.NodeName, "rank", i, "reason", reason)
