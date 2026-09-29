@@ -13,16 +13,17 @@
 #   ./etcd-maintenance.sh --defrag-only   # defrag only (faster)
 #   ./etcd-maintenance.sh --status        # show DB size only
 #
-# Environment variable overrides:
-#   ETCD_POD=etcd-<HOSTNAME>   # etcd pod name (default: etcd-<HOSTNAME>)
-#   ETCD_NS=kube-system         # namespace containing the etcd pod
+# Configuration, from the environment or experiments/site.env:
+#   ETCD_POD      etcd static pod name, e.g. etcd-<control-plane hostname> (required)
+#   ETCD_NS       namespace containing the etcd pod (default: kube-system)
 #
 # Requires: kubectl exec permission and jq on the host
 
 set -e
 
-ETCD_POD="${ETCD_POD:-etcd-<HOSTNAME>}"
-ETCD_NS="${ETCD_NS:-kube-system}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/common.sh
+. "$SCRIPT_DIR/lib/common.sh"
 
 MODE="full"
 case "${1:-}" in
@@ -34,6 +35,9 @@ case "${1:-}" in
     *)
         echo "Unknown option: $1"; exit 1 ;;
 esac
+
+ETCD_POD="${ETCD_POD:?set ETCD_POD in experiments/site.env or the environment}"
+ETCD_NS="${ETCD_NS:-kube-system}"
 
 # Shared cert flags for all etcdctl invocations
 ETCDCTL="ETCDCTL_API=3 etcdctl \

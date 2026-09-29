@@ -12,6 +12,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=lib/common.sh
+. "$SCRIPT_DIR/lib/common.sh"
 RESULTS_DIR="$PROJECT_ROOT/experiments/results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
@@ -32,16 +34,31 @@ CPU_REQUEST=""          # CL2 default: 1000m
 MEMORY_REQUEST=""       # CL2 default: 8Gi
 VARIANCE="0"            # Capacity-variance level for HC-V experiments (0 = homogeneous HC-1)
 BINDER_WORKERS=8         # Number of binder worker goroutines (default: 8; set to 1 for Godel-aligned)
-# Set PROMETHEUS_URL env var to your Prometheus Pushgateway endpoint before running
+# Prometheus endpoint: --prometheus-url, else PROMETHEUS_URL from the
+# environment or experiments/site.env, else localhost.
 PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9091}"
 COLLECT_LOGS=false
 PRESERVE_NODES=false    # If true: skip Step 1 node create (when count AND variance match) and Step 6 node delete
+REGISTRY_BOARD=""       # Registry identity of the cell this run measures, recorded in config.json
+REGISTRY_CELL=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --name)
             EXPERIMENT_NAME="$2"
+            shift 2
+            ;;
+        --results-dir)
+            RESULTS_DIR="$2"
+            shift 2
+            ;;
+        --board)
+            REGISTRY_BOARD="$2"
+            shift 2
+            ;;
+        --cell)
+            REGISTRY_CELL="$2"
             shift 2
             ;;
         --nodes)
@@ -160,7 +177,11 @@ while [[ $# -gt 0 ]]; do
             echo "  --trials NUM             Number of independent trials (default: 1)"
             echo ""
             echo "Infrastructure:"
-            echo "  --prometheus-url URL     Prometheus URL (default: $PROMETHEUS_URL env var or http://localhost:9091)"
+            echo "  --results-dir DIR        Directory the run directory is created in"
+            echo "                           (default: experiments/results; batch drivers pass the board's)"
+            echo "  --board BOARD --cell C   The registry cell this run measures, recorded in"
+            echo "                           config.json (see experiments/registry.json)"
+            echo "  --prometheus-url URL     Prometheus URL (default: $PROMETHEUS_URL, from PROMETHEUS_URL or experiments/site.env)"
             echo "  --collect-logs           Save scheduler/binder/dispatcher logs per trial"
             echo "  --preserve-nodes         Reuse existing KWOK nodes if count matches (Step 1 skips"
             echo "                           create; Step 6 skips node delete). Batch scripts pass this"
@@ -200,6 +221,10 @@ done
 # Validate required parameters
 if [ -z "$EXPERIMENT_NAME" ]; then
     echo "Error: --name is required"
+    exit 1
+fi
+if [[ -n "$REGISTRY_BOARD" && -z "$REGISTRY_CELL" ]] || [[ -z "$REGISTRY_BOARD" && -n "$REGISTRY_CELL" ]]; then
+    echo "Error: --board and --cell go together"
     exit 1
 fi
 
@@ -249,11 +274,18 @@ if [ "$COLLECT_LOGS" = true ]; then echo "  Collect logs: ENABLED"; fi
 echo "============================================"
 echo ""
 
-# Save experiment configuration
+# Save experiment configuration. A run launched for a registry cell records
+# which one, so its identity does not rest on its name alone.
+REGISTRY_FIELDS=""
+if [ -n "$REGISTRY_CELL" ]; then
+    REGISTRY_FIELDS="  \"board\": \"$REGISTRY_BOARD\",
+  \"cell\": \"$REGISTRY_CELL\",
+"
+fi
 cat > "$EXPERIMENT_DIR/config.json" <<EOF
 {
   "name": "$EXPERIMENT_NAME",
-  "timestamp": "$TIMESTAMP",
+${REGISTRY_FIELDS}  "timestamp": "$TIMESTAMP",
   "num_trials": $NUM_TRIALS,
   "parameters": {
     "num_nodes": $NUM_NODES,
@@ -283,29 +315,15 @@ CONFIG_DIR="$PROJECT_ROOT/experiments/kwok-setup"
 KUBECONFIG_PATH="${KUBECONFIG:-$HOME/.kube/config}"
 
 # ============================================================
-# Helper: parse unix timestamp from a CL2 log step marker.
+# Helper: unix timestamp (whole seconds) of a CL2 log step marker, or an empty
+# line when the log has none.
 # CL2 logs: I0408 16:20:07.745190 ... Step "[step: 03] <name>" started/ended
-# Usage: parse_cl2_ts <log_file> <step_name_regex> <started|ended>
+# experiments/common/cl2.py is the one CL2 log parser: the reduction reads the
+# same markers to time each phase, so both agree on the window.
+# Usage: parse_cl2_ts <log_file> <step_name> <started|ended>
 # ============================================================
 parse_cl2_ts() {
-    local log_file=$1 step_re=$2 event=$3
-    local line
-    line=$(grep -E "Step.*${step_re}.*${event}" "$log_file" | head -1)
-    if [ -z "$line" ]; then
-        echo ""
-        return
-    fi
-    # Line format: I0408 16:20:07.745190 ... Step "[step: 03] ..." started
-    # Extract month, day, time using awk on the first field (I0408) and second (16:20:07.xxx)
-    local ts_field time_field
-    ts_field=$(echo "$line" | awk '{print $1}')    # e.g. I0408
-    time_field=$(echo "$line" | awk '{print $2}')  # e.g. 16:20:07.745190
-    local month=${ts_field:1:2} day=${ts_field:3:2}
-    local time=${time_field%%.*}  # strip sub-seconds → 16:20:07
-    local year
-    year=$(date +%Y)
-    # CL2 (Go klog) timestamps are always UTC — force UTC parsing
-    TZ=UTC date -d "${year}-${month}-${day} ${time}" +%s 2>/dev/null || echo ""
+    python3 "$PROJECT_ROOT/experiments/common/cl2.py" step-time "$1" "$2" "$3" || echo ""
 }
 
 # ============================================================
@@ -491,21 +509,7 @@ reset_scheduler_state() {
     #    Shorter timeout than final cleanup Step 6 (60s vs 300s) since the scale is much smaller
     #    (only one trial's worth of pods, not a full experiment + node deletion).
     echo "    Waiting for API server to settle..."
-    TRIAL_SETTLE_DEADLINE=$(($(date +%s) + 60))
-    while true; do
-        REMAINING_PODS=$(kubectl get pods --all-namespaces -l 'group in (saturation, latency)' --no-headers 2>/dev/null | wc -l)
-        API_OK=false
-        if timeout 5 kubectl get ns default >/dev/null 2>&1; then API_OK=true; fi
-        if [ "$REMAINING_PODS" -eq 0 ] && [ "$API_OK" = true ]; then
-            echo "    Cluster settled for next trial."
-            break
-        fi
-        if [ "$(date +%s)" -ge "$TRIAL_SETTLE_DEADLINE" ]; then
-            echo "    Settle timeout — proceeding."
-            break
-        fi
-        sleep 5
-    done
+    settle_briefly 60 "    "
 }
 
 # ============================================================
@@ -639,7 +643,7 @@ if [ "$SYNC_MODE" = "periodic" ]; then
     ENABLE_PARSYNC="true"
 fi
 
-# Script-layer double safety per design-parsync-pull-fix.md §4.4.3:
+# Script-layer double safety:
 # glob is the P=1 special case of periodic sync. Force EFFECTIVE_PARTITIONS=1
 # so the CLI args of dispatcher/scheduler/binder are correct even if the
 # ParSyncConfig CRD read path fails. The Dispatcher also forces P=1 at CRD
@@ -819,16 +823,16 @@ for TRIAL in $(seq 1 "$NUM_TRIALS"); do
     # with para-scheduler.io/partition-id before starting the experiment.
     # Reason: Scheduler's freshness bonus applies only to nodes whose PartitionID
     # >= 0; unlabeled nodes degrade ParSync to non-ParSync silently. Dispatcher
-    # labels nodes serially (~10-20ms/node, §4.3 of code-review), so at 5000+
+    # labels nodes serially (~10-20ms/node), so at 5000+
     # nodes the initial labeling window can exceed 1 min. Measuring before
     # labeling is complete produces a systematic bias in HC-1 P-group results.
     #
     # Skipped in event-driven mode (SYNC_PERIOD < 0.5) — labels are not required.
-    # Timeout 300s (5 min) matches code-review §4.8 hard cap.
+    # Timeout 300s (5 min), the labeling hard cap.
     if (( $(echo "$SYNC_PERIOD >= 0.5" | bc -l) )); then
         # Belt-and-suspenders: kubectl wait on the dispatcher's readinessProbe
         # (backed by /ready, which checks ParSyncConfig CRD + SchedulerAssignments
-        # + expected-nodes label coverage — see design-parsync-pull-fix.md §4.6.3).
+        # + expected-nodes label coverage).
         # Falls through to the inline label poll below as a safety net for
         # operators running older dispatcher images without the probe.
         echo "  Step 3a-pre: Waiting for Dispatcher Ready condition (readinessProbe)..."
@@ -859,21 +863,7 @@ for TRIAL in $(seq 1 "$NUM_TRIALS"); do
     # anomalies at large scale where previous experiment cleanup generates heavy
     # etcd write load.
     echo "  Waiting for API server to settle..."
-    SETTLE_DEADLINE=$(($(date +%s) + 60))
-    while true; do
-        REMAINING_PODS=$(kubectl get pods --all-namespaces -l 'group in (saturation, latency)' --no-headers 2>/dev/null | wc -l)
-        API_OK=false
-        if timeout 5 kubectl get ns default >/dev/null 2>&1; then API_OK=true; fi
-        if [ "$REMAINING_PODS" -eq 0 ] && [ "$API_OK" = true ]; then
-            echo "  Cluster settled."
-            break
-        fi
-        if [ "$(date +%s)" -ge "$SETTLE_DEADLINE" ]; then
-            echo "  Settle timeout — proceeding."
-            break
-        fi
-        sleep 5
-    done
+    settle_briefly 60
 
     # Record trial start timestamp
     START_TS=$(date +%s)
@@ -1063,11 +1053,7 @@ else
     # leave the Watch idle for the duration of setup/config steps, risking the same
     # delayed-discovery problem that caused the s8 NotReady incident.
     echo "  Cleaning up KWOK node leases..."
-    KWOK_LEASES=$(kubectl -n kube-node-lease get leases -o jsonpath='{.items[*].metadata.name}' 2>/dev/null \
-        | tr ' ' '\n' | grep '^kwok-' || true)
-    if [ -n "$KWOK_LEASES" ]; then
-        echo "$KWOK_LEASES" | xargs kubectl -n kube-node-lease delete lease --ignore-not-found=true 2>/dev/null || true
-    fi
+    delete_kwok_leases
 fi
 
 # Clean up CL2-created test namespaces and wait for them to be fully removed.
@@ -1121,33 +1107,7 @@ done
 # We poll until: (1) no KWOK nodes remain, (2) no test pods remain, and
 # (3) API server responds promptly — indicating etcd backlog has cleared.
 echo "  Waiting for API server to settle..."
-SETTLE_TIMEOUT=300
-SETTLE_START=$(date +%s)
-while true; do
-    ELAPSED=$(( $(date +%s) - SETTLE_START ))
-    if [ $ELAPSED -ge $SETTLE_TIMEOUT ]; then
-        echo "  Settle timeout (${SETTLE_TIMEOUT}s) — proceeding anyway."
-        break
-    fi
-
-    # Check remaining KWOK nodes
-    KWOK_NODES=$(kubectl get nodes -l type=kwok --no-headers 2>/dev/null | wc -l)
-    # Check remaining pods in test namespaces
-    REMAINING_PODS=$(kubectl get pods --all-namespaces -l 'group in (saturation, latency)' --no-headers 2>/dev/null | wc -l)
-    # Quick API server latency probe (GET namespaces should be fast)
-    API_OK=false
-    if timeout 5 kubectl get ns default >/dev/null 2>&1; then
-        API_OK=true
-    fi
-
-    if [ "$KWOK_NODES" -eq 0 ] && [ "$REMAINING_PODS" -eq 0 ] && [ "$API_OK" = true ]; then
-        echo "  Cluster settled (${ELAPSED}s): 0 KWOK nodes, 0 test pods, API responsive."
-        break
-    fi
-
-    echo "  Settling... (${ELAPSED}s) kwok_nodes=$KWOK_NODES test_pods=$REMAINING_PODS api_ok=$API_OK"
-    sleep 10
-done
+settle_fully 300
 
 TOTAL_END_TS=$(date +%s)
 echo ""

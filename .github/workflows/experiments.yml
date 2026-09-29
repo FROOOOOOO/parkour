@@ -1,0 +1,59 @@
+# Rebuild the cluster figures and the overhead table from the committed archive
+# on every change.
+#
+# Everything here runs from the repository alone. The trace figure is not
+# rebuilt: its input is the public Alibaba trace, which is pinned by SHA-256 in
+# experiments/registry.json rather than redistributed.
+name: experiments
+
+on:
+  push:
+    paths:
+      - "experiments/**"
+      - ".github/workflows/experiments.yml"
+  pull_request:
+    paths:
+      - "experiments/**"
+      - ".github/workflows/experiments.yml"
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -r experiments/requirements.txt pytest
+
+      - name: Registry is current
+        run: python experiments/common/registry.py --check
+
+      - name: Documents rendered from the registry are current
+        run: python experiments/scripts/generate-docs.py --check
+
+      - name: Shell scripts parse
+        run: for f in experiments/scripts/*.sh experiments/scripts/lib/*.sh; do bash -n "$f"; done
+
+      - name: Validate the archive
+        run: python experiments/scripts/verify-results.py
+
+      - name: Export, and compare with the locked figure data
+        run: python experiments/scripts/export-figure-data.py --all --check
+
+      - name: Tests
+        run: python -m pytest -q experiments/tests
+
+      - name: Render every archived figure
+        run: |
+          for figure in ablation-quality-a ablation-quality-bc dataplane-sensitivity \
+                        occupancy-intervals-1col pareto-all-scales robustness \
+                        scalability-lowcontention scalability-schedulers; do
+            python "experiments/figures/plot-${figure}.py" --output-dir "$RUNNER_TEMP/figures"
+          done
+
+      - name: Render the overhead table
+        run: python experiments/figures/table-overhead.py --output-dir "$RUNNER_TEMP/figures"

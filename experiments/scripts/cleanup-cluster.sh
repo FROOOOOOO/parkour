@@ -22,6 +22,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=lib/common.sh
+. "$SCRIPT_DIR/lib/common.sh"
 DEPLOY_DIR="$PROJECT_ROOT/para-scheduler/deploy/lab-cluster"
 NAMESPACE="para-system"
 
@@ -187,30 +189,7 @@ fi
 # (garbage collection, etc.). Poll until cluster state is fully clean.
 echo ""
 echo "[7/7] Waiting for API server to settle..."
-SETTLE_TIMEOUT=300
-SETTLE_START=$(date +%s)
-while true; do
-    ELAPSED=$(( $(date +%s) - SETTLE_START ))
-    if [ $ELAPSED -ge $SETTLE_TIMEOUT ]; then
-        echo "  Settle timeout (${SETTLE_TIMEOUT}s) — proceeding anyway."
-        break
-    fi
-
-    KWOK_NODES=$(kubectl get nodes -l type=kwok --no-headers 2>/dev/null | wc -l)
-    REMAINING_PODS=$(kubectl get pods --all-namespaces -l 'group in (saturation, latency)' --no-headers 2>/dev/null | wc -l)
-    API_OK=false
-    if timeout 5 kubectl get ns default >/dev/null 2>&1; then
-        API_OK=true
-    fi
-
-    if [ "$KWOK_NODES" -eq 0 ] && [ "$REMAINING_PODS" -eq 0 ] && [ "$API_OK" = true ]; then
-        echo "  Cluster settled (${ELAPSED}s): 0 KWOK nodes, 0 test pods, API responsive."
-        break
-    fi
-
-    echo "  Settling... (${ELAPSED}s) kwok_nodes=$KWOK_NODES test_pods=$REMAINING_PODS api_ok=$API_OK"
-    sleep 10
-done
+settle_fully 300
 
 echo ""
 echo "============================================"

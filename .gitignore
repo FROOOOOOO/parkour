@@ -136,13 +136,25 @@ bin/dispatcher
 bin/binder
 bin/para-sched-api
 
-# Experimental results — generated locally, never committed
+# Experimental results. Raw results (`experiments/results/`) are never
+# committed; the minimal per-trial data the figures need is committed under
+# `experiments/archive/`. `experiments/work/` holds the per-figure JSON the
+# export writes and the figure scripts read, and `experiments/figures/output/`
+# the rendered figures; both are regenerated, never distributed.
 figs/
 paper/
 experiments/results/
+experiments/work/
+experiments/figures/output/
 experiments/trace/*/figures/
 paper_data*.csv
 paper_data*.json
+
+# Site configuration of one's own cluster (see experiments/site.env.example).
+experiments/site.env
+# The cluster credentials experiments/manifests/monitoring/deploy-prometheus.sh mounts.
+experiments/manifests/monitoring/pki/
+experiments/manifests/monitoring/token-*
 
 # Simulation caches and rendered figures (each package regenerates its own)
 simulation/data/

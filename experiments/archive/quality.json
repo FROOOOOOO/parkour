@@ -1,0 +1,446 @@
+{
+  "cells": [
+    {
+      "cell": "AbE0-base",
+      "trials": [
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.073885,
+          "trial": 1
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.006111,
+          "trial": 2
+        },
+        {
+          "candidate_rank_count": 9999.0,
+          "candidate_rank_cumulative": [
+            9999.0,
+            9999.0,
+            9999.0
+          ],
+          "selected_node_score_mean": 622.08082,
+          "trial": 3
+        },
+        {
+          "candidate_rank_count": 9999.0,
+          "candidate_rank_cumulative": [
+            9999.0,
+            9999.0,
+            9999.0
+          ],
+          "selected_node_score_mean": 621.993601,
+          "trial": 4
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.049091,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "AbE1-M",
+      "trials": [
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9501.0,
+            9885.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.181262,
+          "trial": 1
+        },
+        {
+          "candidate_rank_count": 9999.0,
+          "candidate_rank_cumulative": [
+            9517.0,
+            9910.0,
+            9999.0
+          ],
+          "selected_node_score_mean": 622.287368,
+          "trial": 2
+        },
+        {
+          "candidate_rank_count": 9999.0,
+          "candidate_rank_cumulative": [
+            9516.0,
+            9884.0,
+            9999.0
+          ],
+          "selected_node_score_mean": 622.171122,
+          "trial": 3
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9481.0,
+            9882.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.192071,
+          "trial": 4
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9486.0,
+            9865.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.245481,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "AbE2-P",
+      "trials": [
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.042108,
+          "trial": 1
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 621.821387,
+          "trial": 2
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.065544,
+          "trial": 3
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 621.987823,
+          "trial": 4
+        },
+        {
+          "candidate_rank_count": 9999.0,
+          "candidate_rank_cumulative": [
+            9999.0,
+            9999.0,
+            9999.0
+          ],
+          "selected_node_score_mean": 622.074619,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "AbE3-MP",
+      "trials": [
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9557.0,
+            9898.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.239431,
+          "trial": 1
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9491.0,
+            9890.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.174447,
+          "trial": 2
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9535.0,
+            9884.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.193552,
+          "trial": 3
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9545.0,
+            9906.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.27025,
+          "trial": 4
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9535.0,
+            9896.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.251011,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "AbP0-base",
+      "trials": [
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.188378,
+          "trial": 1
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.524087,
+          "trial": 2
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 613.633851,
+          "trial": 3
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 611.343302,
+          "trial": 4
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 614.919523,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "AbP1-M",
+      "trials": [
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            7832.0,
+            9388.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.979217,
+          "trial": 1
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            7805.0,
+            9402.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 623.302037,
+          "trial": 2
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            8860.0,
+            9713.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 618.871594,
+          "trial": 3
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9160.0,
+            9809.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 615.963536,
+          "trial": 4
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9088.0,
+            9765.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 613.893117,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "AbP2-P",
+      "trials": [
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.637209,
+          "trial": 1
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.720875,
+          "trial": 2
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 619.315449,
+          "trial": 3
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 614.929412,
+          "trial": 4
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 614.941957,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "AbP3-MP",
+      "trials": [
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            8360.0,
+            9588.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 623.029092,
+          "trial": 1
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            8487.0,
+            9649.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.597111,
+          "trial": 2
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            8588.0,
+            9673.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 622.583952,
+          "trial": 3
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            8771.0,
+            9729.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 620.85243,
+          "trial": 4
+        },
+        {
+          "candidate_rank_count": 10000.0,
+          "candidate_rank_cumulative": [
+            9205.0,
+            9811.0,
+            10000.0
+          ],
+          "selected_node_score_mean": 619.235823,
+          "trial": 5
+        }
+      ]
+    }
+  ],
+  "kind": "quality",
+  "schema": "parkour-archive/v1"
+}

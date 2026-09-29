@@ -19,9 +19,11 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/common.sh
+. "$SCRIPT_DIR/lib/common.sh"
 # Bypass HTTP(S) proxy for Prometheus + cluster traffic.
-export NO_PROXY="${NO_PROXY:+$NO_PROXY,}<YOUR_CLUSTER_SUBNET>/24,127.0.0.1,localhost,kubernetes.default,kubernetes.default.svc,.svc,.svc.cluster.local"
-export no_proxy="$NO_PROXY"
+export_cluster_no_proxy
 
 PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9091}"
 OUTPUT_DIR=""

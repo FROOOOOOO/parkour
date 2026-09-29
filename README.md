@@ -85,6 +85,9 @@ parkour/
 │
 ├── experiments/            Cluster experiment infrastructure
 │   ├── experiment-design.md  What each experiment board measures, and why
+│   ├── registry.json       The published cluster matrix, declared once (matrix.md renders it)
+│   ├── archive/            Minimal per-trial data behind the cluster figures (CC BY 4.0)
+│   ├── figures/            One script per cluster figure, and the overhead table
 │   ├── scripts/            run-experiment.sh and supporting scripts
 │   ├── kwok-setup/         KWOK node templates + ClusterLoader2 manifests
 │   ├── trace/              Offline production-trace profiling
@@ -165,32 +168,42 @@ cd k8s-scheduler && make build
 ### 2. Deploy
 
 ```bash
-# Apply CRDs and RBAC
-kubectl apply -f para-sched-api/config/
+# Images for the Dispatcher, Binder and schedulers; load them into containerd
+# on the node the components run on (see experiments/README.md)
+bash experiments/build-images.sh
 
-# Deploy Dispatcher, Binder, and Schedulers
-# (edit experiments/manifests/ to match your cluster)
-kubectl apply -f para-scheduler/deploy/lab-cluster/
+# CRDs, RBAC, the Dispatcher, the Binder and ten schedulers
+bash para-scheduler/deploy/lab-cluster/setup.sh 10
+
+# The Godel baseline three figures compare with, loaded the same way
+(cd godel-scheduler && make docker-images)
+bash godel-scheduler/deploy/lab-cluster/setup.sh
 ```
+
+To try the components without a lab cluster,
+`bash para-scheduler/deploy/local-kind/setup.sh` builds the same images and
+deploys them, with three schedulers by default, on a local
+[kind](https://kind.sigs.k8s.io/) cluster running Kubernetes 1.33; it needs
+kind, kubectl, Docker and Go, and `--teardown` deletes the cluster. It is for
+trying the system, not for reproducing the measurements, which need the tuned
+control plane and the KWOK nodes that experiments/README.md describes.
 
 ### 3. Run
 
 ```bash
-# Set your Prometheus pushgateway endpoint
-export PROMETHEUS_URL=http://<your-prometheus-host>:9091
+# The values that belong to your cluster: Prometheus endpoint, subnet, etcd pod
+cp experiments/site.env.example experiments/site.env   # then edit it
 
-bash experiments/scripts/run-experiment.sh \
-  --nodes 10000 \
-  --schedulers 10 \
-  --sync-mode periodic \
-  --sync-period 3.0 \
-  --partitions 10 \
-  --strategy QualityFirst \
-  --penalty 0.3 \
-  --candidates 3
+# The paper's cluster boards, with the parameters experiments/registry.json declares
+bash experiments/scripts/batch-run.sh --group registry --dry-run
+bash experiments/scripts/batch-run.sh --group registry
 ```
 
-See [experiments/README.md](experiments/README.md) for the full setup guide, KWOK configuration, and all available flags.
+The dry-run plan prints every cell's full `run-experiment.sh` command; copy one
+line to run that cell alone. Without a cluster, the cluster figures and the
+overhead table rebuild from the committed archive. See
+[experiments/README.md](experiments/README.md) for the full setup guide, KWOK
+configuration, both paths, and all available flags.
 
 ---
 
@@ -242,17 +255,25 @@ ParKour-specific flags are prefixed with `--parasched-`:
 - [simulation/README.md](simulation/README.md) — Simulator workflow, figure packages, and model semantics
 - [experiments/README.md](experiments/README.md) — Cluster experiment setup and reproduction steps
 - [experiments/experiment-design.md](experiments/experiment-design.md) — What each experiment board measures, its baselines, and its metric definitions
+- [experiments/matrix.md](experiments/matrix.md) — Every published cluster cell with its parameters, generated from the registry
+- [experiments/reconciliation.md](experiments/reconciliation.md) — Where this repository's cluster figures and numbers differ from the camera-ready paper, and why
 
-No measurement results are distributed with this repository. Simulation caches
+Raw measurement results are not distributed. Simulation caches
 (`simulation/figures/*/data/`), rendered figures (`simulation/figures/*/output/`)
 and cluster results (`experiments/results/`) are all generated locally and
-excluded from version control.
+excluded from version control; the minimal per-trial data behind the cluster
+figures and the overhead table is committed under
+[experiments/archive/](experiments/archive/).
 
 ---
 
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
+
+The experiment data under [experiments/archive/](experiments/archive/) is
+licensed separately, under CC BY 4.0; see its
+[README](experiments/archive/README.md).
 
 ## Acknowledgments
 

@@ -1,0 +1,9 @@
+# Python dependencies for the experiment analysis and figure scripts.
+#
+#     pip install -r experiments/requirements.txt
+#
+# The simulation tree under simulation/ has its own, smaller set; see its README.
+matplotlib>=3.7
+# 2.0 for numpy.trapezoid, which the occupancy analysis uses.
+numpy>=2.0
+seaborn>=0.13

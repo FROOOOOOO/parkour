@@ -1,0 +1,356 @@
+{
+  "cells": [
+    {
+      "cell": "B2-10000n-E2",
+      "trials": [
+        {
+          "algo_p99_ms": 253.228,
+          "binder_cpu": 0.359484,
+          "dispatcher_cpu": 0.211362,
+          "e2e_p99_ms": 20094.736,
+          "scheduler_cpu_total": 11.785439,
+          "scheduler_mem_rss_total": 5959442432,
+          "trial": 1
+        },
+        {
+          "algo_p99_ms": 252.093,
+          "binder_cpu": 0.669665,
+          "dispatcher_cpu": 0.304627,
+          "e2e_p99_ms": 19831.492,
+          "scheduler_cpu_total": 14.487965,
+          "scheduler_mem_rss_total": 11818401792,
+          "trial": 2
+        },
+        {
+          "algo_p99_ms": 252.523,
+          "binder_cpu": 0.439458,
+          "dispatcher_cpu": 0.476871,
+          "e2e_p99_ms": 20039.355,
+          "scheduler_cpu_total": 14.913001,
+          "scheduler_mem_rss_total": 16941666304,
+          "trial": 3
+        },
+        {
+          "algo_p99_ms": 247.378,
+          "binder_cpu": 0.60952,
+          "dispatcher_cpu": 0.551175,
+          "e2e_p99_ms": 19841.0,
+          "scheduler_cpu_total": 15.980386,
+          "scheduler_mem_rss_total": 20708397056,
+          "trial": 4
+        },
+        {
+          "algo_p99_ms": 247.2,
+          "binder_cpu": 0.478176,
+          "dispatcher_cpu": 0.155373,
+          "e2e_p99_ms": 19911.189,
+          "scheduler_cpu_total": 15.458663,
+          "scheduler_mem_rss_total": 20397142016,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B2-10000n-E3",
+      "trials": [
+        {
+          "algo_p99_ms": 249.657,
+          "binder_cpu": 0.39834,
+          "dispatcher_cpu": 0.314828,
+          "e2e_p99_ms": 20125.83,
+          "scheduler_cpu_total": 11.829232,
+          "scheduler_mem_rss_total": 5893496832,
+          "trial": 1
+        },
+        {
+          "algo_p99_ms": 248.215,
+          "binder_cpu": 0.347613,
+          "dispatcher_cpu": 0.579779,
+          "e2e_p99_ms": 20047.236,
+          "scheduler_cpu_total": 16.193727,
+          "scheduler_mem_rss_total": 12093911040,
+          "trial": 2
+        },
+        {
+          "algo_p99_ms": 246.537,
+          "binder_cpu": 0.546941,
+          "dispatcher_cpu": 0.345577,
+          "e2e_p99_ms": 19901.674,
+          "scheduler_cpu_total": 15.785859,
+          "scheduler_mem_rss_total": 17484861440,
+          "trial": 3
+        },
+        {
+          "algo_p99_ms": 247.138,
+          "binder_cpu": 0.299427,
+          "dispatcher_cpu": 0.332359,
+          "e2e_p99_ms": 20144.376,
+          "scheduler_cpu_total": 16.467722,
+          "scheduler_mem_rss_total": 20786593792,
+          "trial": 4
+        },
+        {
+          "algo_p99_ms": 246.854,
+          "binder_cpu": 0.409661,
+          "dispatcher_cpu": 0.507331,
+          "e2e_p99_ms": 20022.643,
+          "scheduler_cpu_total": 16.322851,
+          "scheduler_mem_rss_total": 20478713856,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B2-10000n-P1",
+      "trials": [
+        {
+          "algo_p99_ms": 410.329,
+          "binder_cpu": 1.671445,
+          "dispatcher_cpu": 0.399022,
+          "e2e_p99_ms": 20035.664,
+          "scheduler_cpu_total": 28.86041,
+          "scheduler_mem_rss_total": 8732045312,
+          "trial": 1
+        },
+        {
+          "algo_p99_ms": 388.991,
+          "binder_cpu": 0.947881,
+          "dispatcher_cpu": 0.355465,
+          "e2e_p99_ms": 20043.054,
+          "scheduler_cpu_total": 21.743126,
+          "scheduler_mem_rss_total": 15631507456,
+          "trial": 2
+        },
+        {
+          "algo_p99_ms": 251.091,
+          "binder_cpu": 0.503457,
+          "dispatcher_cpu": 0.302776,
+          "e2e_p99_ms": 19589.289,
+          "scheduler_cpu_total": 10.589234,
+          "scheduler_mem_rss_total": 21050462208,
+          "trial": 3
+        },
+        {
+          "algo_p99_ms": 250.682,
+          "binder_cpu": 0.869924,
+          "dispatcher_cpu": 0.620335,
+          "e2e_p99_ms": 19572.518,
+          "scheduler_cpu_total": 13.063809,
+          "scheduler_mem_rss_total": 21086957568,
+          "trial": 4
+        },
+        {
+          "algo_p99_ms": 255.889,
+          "binder_cpu": 0.676412,
+          "dispatcher_cpu": 0.453714,
+          "e2e_p99_ms": 19260.733,
+          "scheduler_cpu_total": 8.999487,
+          "scheduler_mem_rss_total": 21151281152,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B2-10000n-P3",
+      "trials": [
+        {
+          "algo_p99_ms": 416.983,
+          "binder_cpu": 0.837784,
+          "dispatcher_cpu": 0.572087,
+          "e2e_p99_ms": 20018.385,
+          "scheduler_cpu_total": 28.419806,
+          "scheduler_mem_rss_total": 10435940352,
+          "trial": 1
+        },
+        {
+          "algo_p99_ms": 394.523,
+          "binder_cpu": 0.748533,
+          "dispatcher_cpu": 0.412126,
+          "e2e_p99_ms": 20065.361,
+          "scheduler_cpu_total": 8.790817,
+          "scheduler_mem_rss_total": 17810710528,
+          "trial": 2
+        },
+        {
+          "algo_p99_ms": 317.156,
+          "binder_cpu": 0.853522,
+          "dispatcher_cpu": 0.460232,
+          "e2e_p99_ms": 19845.105,
+          "scheduler_cpu_total": 11.066253,
+          "scheduler_mem_rss_total": 19911184384,
+          "trial": 3
+        },
+        {
+          "algo_p99_ms": 314.114,
+          "binder_cpu": 0.79256,
+          "dispatcher_cpu": 0.484126,
+          "e2e_p99_ms": 19863.19,
+          "scheduler_cpu_total": 9.893828,
+          "scheduler_mem_rss_total": 21136846848,
+          "trial": 4
+        },
+        {
+          "algo_p99_ms": 323.549,
+          "binder_cpu": 0.441667,
+          "dispatcher_cpu": 0.30108,
+          "e2e_p99_ms": 19828.137,
+          "scheduler_cpu_total": 8.34633,
+          "scheduler_mem_rss_total": 17483321344,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B2-10000n-P4",
+      "trials": [
+        {
+          "algo_p99_ms": 368.894,
+          "binder_cpu": 1.545932,
+          "dispatcher_cpu": 0.599722,
+          "e2e_p99_ms": 20008.138,
+          "scheduler_cpu_total": 23.109756,
+          "scheduler_mem_rss_total": 8229982208,
+          "trial": 1
+        },
+        {
+          "algo_p99_ms": 361.701,
+          "binder_cpu": 1.773613,
+          "dispatcher_cpu": 0.787917,
+          "e2e_p99_ms": 20227.423,
+          "scheduler_cpu_total": 24.184072,
+          "scheduler_mem_rss_total": 15237111808,
+          "trial": 2
+        },
+        {
+          "algo_p99_ms": 336.128,
+          "binder_cpu": 1.41751,
+          "dispatcher_cpu": 0.643047,
+          "e2e_p99_ms": 20140.253,
+          "scheduler_cpu_total": 23.31016,
+          "scheduler_mem_rss_total": 20257288192,
+          "trial": 3
+        },
+        {
+          "algo_p99_ms": 275.987,
+          "binder_cpu": 1.744139,
+          "dispatcher_cpu": 0.604191,
+          "e2e_p99_ms": 20041.077,
+          "scheduler_cpu_total": 23.808385,
+          "scheduler_mem_rss_total": 27464257536,
+          "trial": 4
+        },
+        {
+          "algo_p99_ms": 297.425,
+          "binder_cpu": 1.854532,
+          "dispatcher_cpu": 0.686818,
+          "e2e_p99_ms": 20013.836,
+          "scheduler_cpu_total": 23.597032,
+          "scheduler_mem_rss_total": 27669016576,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B2-20000n-P1",
+      "trials": [
+        {
+          "algo_p99_ms": 676.304,
+          "binder_cpu": 0.583203,
+          "dispatcher_cpu": 0.282599,
+          "e2e_p99_ms": 93371.708,
+          "scheduler_cpu_total": 7.910149,
+          "scheduler_mem_rss_total": 13512634368,
+          "trial": 1
+        },
+        {
+          "algo_p99_ms": 602.817,
+          "binder_cpu": 0.476172,
+          "dispatcher_cpu": 0.231299,
+          "e2e_p99_ms": 83888.723,
+          "scheduler_cpu_total": 6.975577,
+          "scheduler_mem_rss_total": 28650758144,
+          "trial": 2
+        },
+        {
+          "algo_p99_ms": 626.489,
+          "binder_cpu": 0.609896,
+          "dispatcher_cpu": 0.298065,
+          "e2e_p99_ms": 80935.284,
+          "scheduler_cpu_total": 9.86187,
+          "scheduler_mem_rss_total": 28778315776,
+          "trial": 3
+        },
+        {
+          "algo_p99_ms": 598.09,
+          "binder_cpu": 0.630596,
+          "dispatcher_cpu": 0.260075,
+          "e2e_p99_ms": 81136.242,
+          "scheduler_cpu_total": 8.297143,
+          "scheduler_mem_rss_total": 28118654976,
+          "trial": 4
+        },
+        {
+          "algo_p99_ms": 733.746,
+          "binder_cpu": 0.598081,
+          "dispatcher_cpu": 0.311665,
+          "e2e_p99_ms": 81656.895,
+          "scheduler_cpu_total": 6.748827,
+          "scheduler_mem_rss_total": 28809355264,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B2-20000n-P4",
+      "trials": [
+        {
+          "algo_p99_ms": 499.26,
+          "binder_cpu": 0.776734,
+          "dispatcher_cpu": 0.238254,
+          "e2e_p99_ms": 137605.781,
+          "scheduler_cpu_total": 11.246437,
+          "scheduler_mem_rss_total": 13674713088,
+          "trial": 1
+        },
+        {
+          "algo_p99_ms": 496.479,
+          "binder_cpu": 0.951206,
+          "dispatcher_cpu": 0.33273,
+          "e2e_p99_ms": 135805.041,
+          "scheduler_cpu_total": 17.72253,
+          "scheduler_mem_rss_total": 13125324800,
+          "trial": 2
+        },
+        {
+          "algo_p99_ms": 504.71,
+          "binder_cpu": 1.42568,
+          "dispatcher_cpu": 0.400567,
+          "e2e_p99_ms": 145723.454,
+          "scheduler_cpu_total": 23.940503,
+          "scheduler_mem_rss_total": 13116923904,
+          "trial": 3
+        },
+        {
+          "algo_p99_ms": 503.284,
+          "binder_cpu": 1.353118,
+          "dispatcher_cpu": 0.354308,
+          "e2e_p99_ms": 143979.204,
+          "scheduler_cpu_total": 20.539574,
+          "scheduler_mem_rss_total": 13062512640,
+          "trial": 4
+        },
+        {
+          "algo_p99_ms": 501.593,
+          "binder_cpu": 1.26049,
+          "dispatcher_cpu": 0.328171,
+          "e2e_p99_ms": 137463.372,
+          "scheduler_cpu_total": 18.245738,
+          "scheduler_mem_rss_total": 13776138240,
+          "trial": 5
+        }
+      ]
+    }
+  ],
+  "kind": "overhead",
+  "schema": "parkour-archive/v1"
+}

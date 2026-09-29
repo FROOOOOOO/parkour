@@ -4,13 +4,18 @@
 import argparse
 import json
 import math
-import re
+import sys
 from collections import defaultdict
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+_EXPERIMENTS = Path(__file__).resolve().parent.parent
+if str(_EXPERIMENTS) not in sys.path:
+    sys.path.insert(0, str(_EXPERIMENTS))
+
+from common import cl2  # noqa: E402
 
 
 SCENARIOS = [
@@ -43,7 +48,7 @@ INTERVALS = [
 ]
 
 
-def _b2_scenarios() -> list[dict]:
+def b2_scenarios() -> list[dict]:
     scenarios = []
     for nodes, scale in ((2000, "2k"), (5000, "5k"), (10000, "10k"),
                          (20000, "20k")):
@@ -75,13 +80,6 @@ def _b2_scenarios() -> list[dict]:
     return scenarios
 
 
-LOG_TIME_RE = re.compile(r"^I(\d{4}) (\d\d:\d\d:\d\d\.\d+)")
-POD_STATUS_RE = re.compile(
-    r"namespace\(([^)]+)\).*Pods: (\d+) out of (\d+) created, "
-    r"(\d+) running .*?, (\d+) pending scheduled,"
-)
-
-
 def _read_json(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as stream:
         return json.load(stream)
@@ -97,14 +95,8 @@ def _find_experiment(results_root: Path, group: str, prefix: str) -> Path:
     return matches[0]
 
 
-def _log_epoch(day: str, clock: str) -> float:
-    parsed = datetime.strptime(
-        f"2026{day} {clock}", "%Y%m%d %H:%M:%S.%f"
-    ).replace(tzinfo=timezone.utc)
-    return parsed.timestamp()
-
-
-def _occupancy_boundaries(log_path: Path, expected_pods: int) -> list[float]:
+def _occupancy_boundaries(log_path: Path, expected_pods: int,
+                          reference: float) -> list[float]:
     """Return UTC epochs at 0%, 80%, 90%, and 100% workload fill."""
     thresholds = [
         0,
@@ -116,37 +108,30 @@ def _occupancy_boundaries(log_path: Path, expected_pods: int) -> list[float]:
     states: dict[str, int] = {}
     crossings: dict[int, float] = {}
 
-    with log_path.open(encoding="utf-8", errors="replace") as stream:
-        for line in stream:
-            time_match = LOG_TIME_RE.match(line)
-            if not time_match:
-                continue
-            timestamp = _log_epoch(time_match.group(1), time_match.group(2))
+    for line in cl2.lines(str(log_path), reference):
+        if line.severity != "I":
+            continue
+        marker = cl2.step(line.message)
+        if cl2.is_step(marker, cl2.SATURATION_START):
+            start = line.time
+            crossings[0] = line.time
+            continue
+        if start is None:
+            continue
+        if cl2.is_step(marker, cl2.SATURATION_DELETION):
+            break
 
-            if 'Creating saturation pods" started' in line:
-                start = timestamp
-                crossings[0] = timestamp
-                continue
-            if start is None:
-                continue
-            if 'Deleting saturation pods" started' in line:
-                break
+        pods = cl2.pods(line.message)
+        if pods is None or not cl2.is_saturation(pods.controller):
+            continue
+        if pods.expected == 0:
+            continue
 
-            status_match = POD_STATUS_RE.search(line)
-            if not status_match or "controlledBy(saturation-" not in line:
-                continue
-            namespace = status_match.group(1)
-            target = int(status_match.group(3))
-            running = int(status_match.group(4))
-            pending_scheduled = int(status_match.group(5))
-            if target == 0:
-                continue
-
-            states[namespace] = running + pending_scheduled
-            assigned = sum(states.values())
-            for threshold in thresholds[1:]:
-                if threshold not in crossings and assigned >= threshold:
-                    crossings[threshold] = timestamp
+        states[pods.namespace] = pods.running + pods.pending_scheduled
+        assigned = sum(states.values())
+        for threshold in thresholds[1:]:
+            if threshold not in crossings and assigned >= threshold:
+                crossings[threshold] = line.time
 
     missing = [threshold for threshold in thresholds if threshold not in crossings]
     if missing:
@@ -186,7 +171,11 @@ def _summary_value(path: Path, *keys: str) -> float:
 def _process_trial(
     trial_dir: Path, expected_pods: int
 ) -> dict:
-    boundaries = _occupancy_boundaries(trial_dir / "cl2.log", expected_pods)
+    timing_path = trial_dir / "timing.json"
+    timing = _read_json(timing_path) if timing_path.exists() else None
+    boundaries = _occupancy_boundaries(
+        trial_dir / "cl2.log", expected_pods, cl2.trial_reference(timing)
+    )
     acf_points = _matrix_sum(
         trial_dir / "metrics-saturation" / "all_candidates_failed_rate.json"
     )
@@ -499,7 +488,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.scope == "b2":
-        scenarios = _b2_scenarios()
+        scenarios = b2_scenarios()
         default_stem = "Table-B2-temporal-occupancy"
     else:
         scenarios = SCENARIOS

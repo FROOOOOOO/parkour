@@ -14,14 +14,12 @@
 
 set -e
 
-# Bypass any HTTP(S) proxy for in-cluster traffic (kubectl, curl to Prometheus).
-# Necessary when shell-level HTTPS_PROXY points at e.g. Clash on 127.0.0.1:7890
-# that isn't running — kubectl would otherwise fail with proxyconnect errors.
-export NO_PROXY="${NO_PROXY:+$NO_PROXY,}<YOUR_CLUSTER_SUBNET>/24,127.0.0.1,localhost,kubernetes.default,kubernetes.default.svc,.svc,.svc.cluster.local"
-export no_proxy="$NO_PROXY"
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=lib/common.sh
+. "$SCRIPT_DIR/lib/common.sh"
+# Bypass any HTTP(S) proxy for in-cluster traffic (kubectl, curl to Prometheus).
+export_cluster_no_proxy
 RESULTS_DIR="$PROJECT_ROOT/experiments/results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
@@ -34,13 +32,19 @@ PODS_PER_NODE=1
 CPU_REQUEST="24000m"      # HC-V pod: 24 CPU on heterogeneous shards [24,47]
 MEMORY_REQUEST="192Gi"
 VARIANCE="0.6"            # HC-V capacity-variance level
-PROMETHEUS_URL="http://${MONITORING_IP:-<MONITORING_IP>}:9091"
+# From the environment or experiments/site.env, else localhost.
+PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9091}"
 COLLECT_LOGS=false
 PRESERVE_NODES=false
+REGISTRY_BOARD=""         # Registry identity of the cell this run measures, recorded in config.json
+REGISTRY_CELL=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --name)            EXPERIMENT_NAME="$2";  shift 2 ;;
+        --results-dir)     RESULTS_DIR="$2";      shift 2 ;;
+        --board)           REGISTRY_BOARD="$2";   shift 2 ;;
+        --cell)            REGISTRY_CELL="$2";    shift 2 ;;
         --nodes)           NUM_NODES="$2";        shift 2 ;;
         --schedulers)      NUM_SCHEDULERS="$2";   shift 2 ;;
         --trials)          NUM_TRIALS="$2";       shift 2 ;;
@@ -70,7 +74,10 @@ Workload (HC-V defaults):
   --variance V          Capacity variance               (default: 0.6)
 
 Other:
-  --prometheus-url URL  Prometheus URL                  (default: http://${MONITORING_IP:-<MONITORING_IP>}:9091)
+  --results-dir DIR     Directory the run directory is created in
+                        (default: experiments/results; batch drivers pass the board's)
+  --board B --cell C    The registry cell this run measures, recorded in config.json
+  --prometheus-url URL  Prometheus URL                  (default: $PROMETHEUS_URL)
   --collect-logs        Save component logs per trial
   --preserve-nodes      Skip KWOK node create/delete (reuse existing)
 EOF
@@ -81,6 +88,9 @@ done
 
 if [ -z "$EXPERIMENT_NAME" ]; then
     echo "ERROR: --name is required"; exit 1
+fi
+if [[ -n "$REGISTRY_BOARD" && -z "$REGISTRY_CELL" ]] || [[ -z "$REGISTRY_BOARD" && -n "$REGISTRY_CELL" ]]; then
+    echo "ERROR: --board and --cell go together"; exit 1
 fi
 if [ "$NUM_SCHEDULERS" -lt 1 ] || [ "$NUM_SCHEDULERS" -gt 10 ]; then
     echo "ERROR: --schedulers must be in [1, 10] (godel deploy/lab-cluster MAX_SCHEDULERS=10)"; exit 1
@@ -98,10 +108,17 @@ KUBECONFIG_PATH="${KUBECONFIG:-$HOME/.kube/config}"
 EXPERIMENT_DIR="$RESULTS_DIR/${TIMESTAMP}-${EXPERIMENT_NAME}-godel-N${NUM_SCHEDULERS}-${NUM_NODES}n"
 mkdir -p "$EXPERIMENT_DIR"
 
+# A run launched for a registry cell records which one.
+REGISTRY_FIELDS=""
+if [ -n "$REGISTRY_CELL" ]; then
+    REGISTRY_FIELDS="  \"board\": \"${REGISTRY_BOARD}\",
+  \"cell\": \"${REGISTRY_CELL}\",
+"
+fi
 cat > "$EXPERIMENT_DIR/config.json" <<EOF
 {
   "experiment_name": "${EXPERIMENT_NAME}",
-  "baseline": "godel",
+${REGISTRY_FIELDS}  "baseline": "godel",
   "num_nodes": ${NUM_NODES},
   "num_schedulers": ${NUM_SCHEDULERS},
   "num_trials": ${NUM_TRIALS},
@@ -123,22 +140,12 @@ echo "  Workload:   ppn=${PODS_PER_NODE} cpu=${CPU_REQUEST} mem=${MEMORY_REQUEST
 echo ""
 
 # ============================================================
-# Helper: parse a unix timestamp from a CL2 log step marker.
-# (Identical to run-experiment.sh's parse_cl2_ts.)
+# Helper: unix timestamp (whole seconds) of a CL2 log step marker, or an empty
+# line when the log has none. Parsed by experiments/common/cl2.py, as in
+# run-experiment.sh.
 # ============================================================
 parse_cl2_ts() {
-    local log_file=$1 step_re=$2 event=$3
-    local line
-    line=$(grep -E "Step.*${step_re}.*${event}" "$log_file" | head -1)
-    [ -z "$line" ] && { echo ""; return; }
-    local ts_field time_field
-    ts_field=$(echo "$line" | awk '{print $1}')
-    time_field=$(echo "$line" | awk '{print $2}')
-    local month=${ts_field:1:2} day=${ts_field:3:2}
-    local time=${time_field%%.*}
-    local year
-    year=$(date +%Y)
-    TZ=UTC date -d "${year}-${month}-${day} ${time}" +%s 2>/dev/null || echo ""
+    python3 "$PROJECT_ROOT/experiments/common/cl2.py" step-time "$1" "$2" "$3" || echo ""
 }
 
 collect_phase_metrics() {
@@ -238,15 +245,7 @@ for TRIAL in $(seq 1 "$NUM_TRIALS"); do
 
     # Step 3a: API settle — verify no leftover saturation pods, API responsive
     echo "  Waiting for API server to settle..."
-    SETTLE_DEADLINE=$(($(date +%s) + 60))
-    while true; do
-        REMAINING=$(kubectl get pods --all-namespaces -l 'group in (saturation, latency)' --no-headers 2>/dev/null | wc -l)
-        API_OK=false
-        timeout 5 kubectl get ns default >/dev/null 2>&1 && API_OK=true
-        if [ "$REMAINING" -eq 0 ] && [ "$API_OK" = true ]; then break; fi
-        if [ "$(date +%s)" -ge "$SETTLE_DEADLINE" ]; then echo "  Settle timeout — proceeding."; break; fi
-        sleep 5
-    done
+    settle_briefly 60
 
     START_TS=$(date +%s)
 
@@ -380,9 +379,7 @@ if [ "$PRESERVE_NODES" = true ]; then
 else
     echo "  Deleting KWOK nodes..."
     kubectl delete nodes -l type=kwok --ignore-not-found=true --wait=true --timeout=300s 2>/dev/null || true
-    KWOK_LEASES=$(kubectl -n kube-node-lease get leases -o jsonpath='{.items[*].metadata.name}' 2>/dev/null \
-        | tr ' ' '\n' | grep '^kwok-' || true)
-    [ -n "$KWOK_LEASES" ] && echo "$KWOK_LEASES" | xargs kubectl -n kube-node-lease delete lease --ignore-not-found=true 2>/dev/null || true
+    delete_kwok_leases
 fi
 
 echo "  Cleaning CL2 test namespaces..."

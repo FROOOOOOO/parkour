@@ -67,6 +67,12 @@ is reproduced by running its package from scratch.
 | `fig7_penalty` | `penalty-study.pdf` | Penalty-only effect and fallback-list synergy |
 | `fig8_penalty_scope` | `penalty-scope.pdf` | Shared versus per-scheduler penalty observation scope |
 
+Every `plot.py` produces exactly one figure. Of those six, five appear in the
+ParKour paper; `penalty-scope.pdf` does not, because the paper shows that
+comparison as the third panel of `penalty-study.pdf` instead. The package is
+still what produces it: `fig8_penalty_scope/panels.py` holds the drawing, and
+both figures import it, so neither `plot.py` depends on the other's renderer.
+
 Two packages read a neighbour's verified cache, because the panel they draw is a
 selected view of that neighbour's matrix rather than a separate experiment:
 

@@ -2,11 +2,12 @@
 
 # Collect metrics from Prometheus for Para-Sched experiments.
 #
-# Queries are organized by priority (P0/P1/P2) aligned with design.md §2.3.
+# Queries are organized by priority (P0/P1/P2) aligned with experiment-design.md §2.3.
 # All results are saved as individual JSON files under the output directory.
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9091}"
 OUTPUT_DIR=""
 START_TIME=""
@@ -136,7 +137,7 @@ query_instant() {
 }
 
 # ==============================================================
-#  P0: Core metrics (design.md §2.3 — required for key results)
+#  P0: Core metrics (experiment-design.md §2.3 — required for key results)
 # ==============================================================
 echo ""
 echo "=== P0: Core metrics ==="
@@ -357,7 +358,7 @@ query_metric "penalty_signal_age_p99" \
 query_metric "all_candidates_failed_rate" \
     'rate(parasched_all_candidates_failed_total[1m])'
 
-# ---- Cold-start observability (design-parsync-pull-fix.md §4.6.4) ----
+# ---- Cold-start observability ----
 
 # First snapshot applied per partition. The latest of these across partitions
 # minus the experiment start time = cold-start duration. Instant query at end
@@ -682,6 +683,19 @@ print(f'    conflicts={bnd[\"conflict\"]}, conflict_rate={bnd[\"conflict_rate\"]
 e2e_p99 = f'{lat[\"e2e_p99\"]*1000:.1f}ms' if lat.get('e2e_p99') else 'N/A'
 print(f'    e2e_latency_p99={e2e_p99}')
 " 2>/dev/null || true
+fi
+
+# ==============================================================
+#  Scheduling quality (saturation phase only)
+# ==============================================================
+# The selected-node score and accepted-candidate rank histograms, which the
+# ablation figure reads. pull-quality-metrics.py snapshots them over the window
+# meta.json records; running it here, while Prometheus still holds the run,
+# leaves the trial's raw results complete when the trial ends.
+if [ "$(basename "$OUTPUT_DIR")" = "metrics-saturation" ]; then
+    echo "  [quality] (histogram snapshots)"
+    python3 "$SCRIPT_DIR/pull-quality-metrics.py" "$(dirname "$OUTPUT_DIR")" \
+        || echo "    WARN: quality metrics not captured"
 fi
 
 echo ""

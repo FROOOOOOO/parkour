@@ -27,27 +27,29 @@ its legend entry say "Throughput", matching the paper-wide term defined in
 §5.1 (Metrics and statistics) rather than introducing a separate "useful
 throughput" concept.
 
-Data source: Table-B2-temporal-occupancy.json, produced by
-    python analyze-temporal-occupancy.py --scope b2
-Only the per-interval `summary` blocks (median / q1 / q3 over five trials) are
-read; no value is hardcoded in this script.
+Input: experiments/work/figure-data/occupancy-intervals-1col.json, written by
 
-Colours / style aligned with plot-fig-scalability-2panel.py and
-plot-fig-ablation.py (dark shades = event-driven, light shades = periodic).
+    python ../scripts/export-figure-data.py --figure occupancy-intervals-1col
+
+The export reads the per-trial interval values in `archive/occupancy.json`,
+which `reduce.py` takes from `analyze-temporal-occupancy.py --scope b2`, and
+reduces each interval to its median and quartiles over the five trials. Only
+the 20,000-node scale the paper shows is archived. No value is hardcoded here.
+
+Colours follow `common/style.py` (dark shades = event-driven, light shades =
+periodic).
 
 Usage:
-    python plot-fig-occupancy-intervals.py                  # paper figure (20k)
-    python plot-fig-occupancy-intervals.py --scales 10k     # other scale
-    python plot-fig-occupancy-intervals.py --layout paradigm-cols \
+    python plot-occupancy-intervals-1col.py                 # the paper figure
+    python plot-occupancy-intervals-1col.py --layout paradigm-cols \
         --width 7.0 --row-height 1.90                       # wide figure* variant
-    python plot-fig-occupancy-intervals.py --show           # save + display
-    python plot-fig-occupancy-intervals.py --data path/to.json --output-dir out/
+    python plot-occupancy-intervals-1col.py --show          # save + display
+    python plot-occupancy-intervals-1col.py --data path/to.json --output-dir out/
 """
 
 import argparse
-import json
 import os
-import shutil
+import sys
 import warnings
 
 import matplotlib.lines as mlines
@@ -55,68 +57,50 @@ import matplotlib.patches as mpatches
 import matplotlib.patheffects as path_effects
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 from matplotlib.gridspec import GridSpec
 from matplotlib.ticker import PercentFormatter
 
 warnings.filterwarnings("ignore", message=".*iCCP.*")
 
 # ---------------------------------------------------------------------------
-#  Paths
+#  Paths and identity
 # ---------------------------------------------------------------------------
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_REPO = os.path.abspath(os.path.join(_HERE, "..", ".."))
-DEFAULT_DATA = os.path.join(_REPO, "experiments", "results", "figures",
-                            "Table-B2-temporal-occupancy.json")
-DEFAULT_OUTPUT_DIR = os.path.join(_REPO, "experiments", "results", "figures")
-DEFAULT_PAPER_FIG_DIR = os.path.join(_REPO, "paper", "figs")
-# The paper includes the single-column variant; the file names it references are
-# the defaults so that a bare run reproduces exactly the figure in the PDF.
-DEFAULT_STEM = "Fig-occupancy-intervals-1col"
-DEFAULT_PAPER_STEM = "occupancy-intervals-1col"
+_EXPERIMENTS = os.path.abspath(os.path.join(_HERE, ".."))
+if _EXPERIMENTS not in sys.path:
+    sys.path.insert(0, _EXPERIMENTS)
+
+from common import data as envelope  # noqa: E402
+from common import style  # noqa: E402
+
+FIGURE = "occupancy-intervals-1col"
+DEFAULT_OUTPUT_DIR = os.path.join(_HERE, "output")
 DEFAULT_SCALES = ["20k"]
-DEFAULT_LAYOUT = "paradigm-rows"
 DEFAULT_WIDTH = 3.33       # ACM sigplan \columnwidth
-DEFAULT_ROW_HEIGHT = 1.15  # compressed to match plot-fig-dataplane-sensitivity.py
+DEFAULT_ROW_HEIGHT = 1.15  # compressed to match the data-plane figure
+DEFAULT_LAYOUT = "paradigm-rows"
 
 # ---------------------------------------------------------------------------
-#  Colours — same palette as plot-fig-scalability-2panel.py
-#  (dark red/green = event-driven, light red/green = periodic)
+#  Colours and per-figure sizes
+#
+#  Dark shades are event-driven, light shades periodic; the hues come from the
+#  shared palette so this figure matches the other system comparisons.
 # ---------------------------------------------------------------------------
-_rdbu = sns.color_palette("RdBu", 11)
+C_RED_D = style.VANILLA_RED
+C_RED_L = style.VANILLA_RED_LIGHT
+C_GREEN_D = style.PARKOUR_GREEN
+C_GREEN_L = style.PARKOUR_GREEN_LIGHT
+C_MARKER_EDGE = style.EDGE_GREY
 
-C_RED_D   = "#{:02x}{:02x}{:02x}".format(     # dark red   — vanilla event-driven
-    int(_rdbu[1][0] * 255), int(_rdbu[1][1] * 255), int(_rdbu[1][2] * 255))
-C_RED_L   = "#{:02x}{:02x}{:02x}".format(     # light red  — vanilla periodic
-    int(_rdbu[3][0] * 255), int(_rdbu[3][1] * 255), int(_rdbu[3][2] * 255))
-C_GREEN_D = "#238b45"                          # dark green  — ParKour event-driven
-C_GREEN_L = "#74c476"                          # light green — ParKour periodic
-C_MARKER_EDGE = "#333333"                      # dark ring around throughput markers
-
-# ---------------------------------------------------------------------------
-#  Style — matches RC_PARAMS of plot-fig-dataplane-sensitivity.py (the other
-#  compressed single-column figure); fonttype 42 keeps the PDF/PS text as
-#  embedded TrueType subsets so pdflatex needs no external font.
-# ---------------------------------------------------------------------------
-RC_PARAMS = {
-    "font.size":             7.5,
-    "axes.labelsize":        7.0,
-    "axes.titlesize":        7.5,
-    "xtick.labelsize":       6.8,
-    "ytick.labelsize":       6.8,
-    "legend.fontsize":       6.5,
-    "axes.linewidth":        0.7,
-    "lines.linewidth":       1.3,
-    "pdf.fonttype":          42,
-    "ps.fonttype":           42,
-    # Arial for text and mathtext alike, so this figure keeps the same family
-    # as the rest of the paper rather than inheriting it from seaborn.
-    "font.family":           "sans-serif",
-    "font.sans-serif":       ["Arial", "Helvetica", "DejaVu Sans"],
-    "mathtext.fontset":      "custom",
-    "mathtext.rm":           "Arial",
-    "mathtext.it":           "Arial:italic",
-    "mathtext.bf":           "Arial:bold",
+RC_OVERRIDES = {
+    "font.size": 7.5,
+    "axes.labelsize": 7.0,
+    "axes.titlesize": 7.5,
+    "xtick.labelsize": 6.8,
+    "ytick.labelsize": 6.8,
+    "legend.fontsize": 6.5,
+    "axes.linewidth": 0.7,
+    "lines.linewidth": 1.3,
 }
 
 BAR_WIDTH   = 0.34   # width of one bar inside a two-bar occupancy group
@@ -181,33 +165,6 @@ ACF_LABEL   = "ACF rate"
 # Two lines keep the label inside the compressed single-column panel height.
 TPUT_LABEL  = "Throughput\n(pods/s)"
 TPUT_LEGEND = "Throughput (right axis)"
-
-
-# ---------------------------------------------------------------------------
-#  Data loading
-# ---------------------------------------------------------------------------
-
-def load_data(path):
-    """Load the occupancy-interval table produced by analyze-temporal-occupancy.py.
-
-    Args:
-        path: Path to Table-B2-temporal-occupancy.json.
-
-    Returns:
-        Parsed JSON dictionary with `metadata` and `scenarios` keys.
-
-    Raises:
-        RuntimeError: If the file does not carry B2 occupancy-interval data.
-    """
-    with open(path, encoding="utf-8") as stream:
-        data = json.load(stream)
-    metadata = data.get("metadata", {})
-    if metadata.get("scope") != "b2" or "intervals" not in metadata:
-        raise RuntimeError(
-            f"{path} is not a B2 occupancy table; regenerate it with "
-            "`analyze-temporal-occupancy.py --scope b2`"
-        )
-    return data
 
 
 def _series(data, scale, paradigm_key, config_label, metric):
@@ -319,7 +276,7 @@ def _draw_panel(ax, data, scale, paradigm, panel_tag, tput_top, show_xlabel,
         show_xticklabels: Whether to draw the interval tick labels ("0-80%",
                           ...). Stacked rows of one column share the same
                           intervals, so only the bottom row needs them, as in
-                          plot-fig-dataplane-sensitivity.py.
+                          plot-dataplane-sensitivity.py.
     """
     ax2 = ax.twinx()
     labels = _interval_labels(data)
@@ -427,8 +384,7 @@ def build_figure(data, scales, width, row_height, tput_labels=True,
     Returns:
         The matplotlib Figure.
     """
-    sns.set_style("ticks")
-    plt.rcParams.update(RC_PARAMS)
+    style.apply(**RC_OVERRIDES)
 
     # Panel grid: each cell holds the (scale, paradigm) pair it draws.
     if layout == "paradigm-cols":
@@ -545,85 +501,46 @@ def print_table(data, scales):
 
 
 # ---------------------------------------------------------------------------
-#  Save
-# ---------------------------------------------------------------------------
-
-def save(fig, output_dir, stem, paper_fig_dir, paper_stem):
-    """Write PDF/SVG/PNG next to the analysis tables and copy the vectors to paper/figs.
-
-    Args:
-        fig:           Figure to save.
-        output_dir:    Directory for the PDF/SVG/PNG outputs.
-        stem:          File name stem inside `output_dir`.
-        paper_fig_dir: Directory receiving PDF/SVG copies; skipped when empty.
-        paper_stem:    File name stem used for the paper copies.
-    """
-    os.makedirs(output_dir, exist_ok=True)
-    written = []
-    for ext in ("pdf", "svg", "png"):
-        path = os.path.join(output_dir, f"{stem}.{ext}")
-        fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=0.01)
-        written.append(path)
-
-    if paper_fig_dir:
-        os.makedirs(paper_fig_dir, exist_ok=True)
-        for ext in ("pdf", "svg"):
-            target = os.path.join(paper_fig_dir, f"{paper_stem}.{ext}")
-            shutil.copyfile(os.path.join(output_dir, f"{stem}.{ext}"), target)
-            written.append(target)
-
-    for path in written:
-        print(f"Wrote {path}")
-
-
-# ---------------------------------------------------------------------------
 #  Main
 # ---------------------------------------------------------------------------
 
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser(
-        description="Paper Figure — ACF and throughput by slot-occupancy "
-                    "interval (B2, Vanilla vs. ParKour, both paradigms)")
-    ap.add_argument("--data", default=DEFAULT_DATA,
-                    help="Occupancy table JSON from analyze-temporal-occupancy.py "
-                         "--scope b2")
-    ap.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR,
-                    help="Directory for the PDF/SVG/PNG outputs")
-    ap.add_argument("--stem", default=DEFAULT_STEM,
-                    help="File name stem for the outputs in --output-dir")
-    ap.add_argument("--paper-figs-dir", default=DEFAULT_PAPER_FIG_DIR,
-                    help="Directory receiving PDF/SVG copies; pass '' to skip")
-    ap.add_argument("--paper-stem", default=DEFAULT_PAPER_STEM,
-                    help="File name stem for the paper/figs copies")
-    ap.add_argument("--scales", nargs="+", default=DEFAULT_SCALES,
-                    help="Cluster-size keys to plot (2k 5k 10k 20k); the paper "
-                         "figure uses 20k only")
-    ap.add_argument("--width", type=float, default=DEFAULT_WIDTH,
-                    help="Figure width in inches (3.33 fits a single-column "
-                         "figure, 7.0 a two-column figure*)")
-    ap.add_argument("--row-height", type=float, default=DEFAULT_ROW_HEIGHT,
-                    help="Height in inches per panel row")
-    ap.add_argument("--layout", choices=("paradigm-cols", "paradigm-rows"),
-                    default=DEFAULT_LAYOUT,
-                    help="'paradigm-rows' (default): paradigms stacked, scales in "
-                         "columns (single text column); 'paradigm-cols': paradigms "
-                         "side by side, one scale per row (wide figure*)")
-    ap.add_argument("--no-tput-labels", action="store_true",
-                    help="Do not print median throughput values above markers")
-    ap.add_argument("--no-table", action="store_true",
-                    help="Do not print the plotted medians and Q1-Q3 ranges")
-    ap.add_argument("--show", action="store_true",
-                    help="Display figure interactively after saving")
-    args = ap.parse_args()
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--data", default=envelope.path_for(_EXPERIMENTS, FIGURE),
+                        help="Exported figure data (default: the export path)")
+    parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--scales", nargs="+", default=DEFAULT_SCALES,
+                        help="Cluster scales to draw, e.g. 2k 5k 10k 20k")
+    parser.add_argument("--width", type=float, default=DEFAULT_WIDTH,
+                        help="Figure width in inches")
+    parser.add_argument("--row-height", type=float, default=DEFAULT_ROW_HEIGHT,
+                        help="Height in inches per panel row")
+    parser.add_argument("--layout", choices=("paradigm-cols", "paradigm-rows"),
+                        default=DEFAULT_LAYOUT,
+                        help="'paradigm-rows' (default): paradigms stacked, scales "
+                             "in columns (single text column); 'paradigm-cols': "
+                             "paradigms side by side, one scale per row")
+    parser.add_argument("--no-tput-labels", action="store_true",
+                        help="Do not print median throughput values above markers")
+    parser.add_argument("--no-table", action="store_true",
+                        help="Do not print the plotted medians and Q1-Q3 ranges")
+    parser.add_argument("--show", action="store_true",
+                        help="Display the figure after saving")
+    args = parser.parse_args()
 
-    occupancy = load_data(args.data)
+    occupancy = envelope.load(args.data, figure=FIGURE)
     figure = build_figure(occupancy, args.scales, args.width, args.row_height,
                           tput_labels=not args.no_tput_labels,
                           layout=args.layout)
-    save(figure, args.output_dir, args.stem, args.paper_figs_dir, args.paper_stem)
+    for path in style.save_figure(figure, args.output_dir, FIGURE):
+        print(path)
     if not args.no_table:
         print_table(occupancy, args.scales)
     if args.show:
         plt.show()
     else:
         plt.close(figure)
+
+
+if __name__ == "__main__":
+    main()

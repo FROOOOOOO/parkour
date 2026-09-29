@@ -1,0 +1,14 @@
+{
+  "figures": {
+    "ablation-quality-a": "c1a684460754e8d136c570a39e81e955ed9d1e8af50f07dc4f9060dd51824a8f",
+    "ablation-quality-bc": "84003127dc2e1b5336fe409fb59bf9e3214d63433b9ab83091ed34f1a5559b0f",
+    "dataplane-sensitivity": "8a2243b36016171c4f7f29c74fda3e4025c0fe7855ac847ffa7cc88a0b43116d",
+    "occupancy-intervals-1col": "55d41ecaea87f55a5749deee547a09d25887c1e6410256fe7ac8ec60b521a285",
+    "overhead": "acd1f24601d82a5b306bc35becdd687b8d33de6e6a23fca28f95dafdced53a9b",
+    "pareto-all-scales": "9163774897907e0010484b5e25ca69f69626fb89a03e238fe25ea1ced1f70abd",
+    "robustness": "f217b1cea2cb5a7b8b9c421a57cb539d00058e51c217ab60e531e739a425f16b",
+    "scalability-lowcontention": "c7ec92626b68f62ea21158ec54efa1d20c8e73dd0d8867fee9d490a298adc284",
+    "scalability-schedulers": "e8e49de08f56dfa915a53f47b8c2637571068ed5ea9288a9b55c8f616dd74df9"
+  },
+  "schema": "parkour-figure-data-lock/v1"
+}

@@ -1,0 +1,736 @@
+{
+  "board": "B1",
+  "cells": [
+    {
+      "cell": "B1-1000n-E1",
+      "recorded": {
+        "capacity_variance": "0.6",
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 1000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": "29",
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "recorded_trials": 5,
+      "trials": [
+        {
+          "acf_count": 35,
+          "acf_rate": 0.0012,
+          "bind_conflict_count": 35,
+          "bind_conflict_rate": 0.0012,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 344.447,
+          "throughput_pods_per_s": 84.19,
+          "trial": 1
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 341.726,
+          "throughput_pods_per_s": 84.86,
+          "trial": 2
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 339.64,
+          "throughput_pods_per_s": 85.38,
+          "trial": 3
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 343.464,
+          "throughput_pods_per_s": 84.43,
+          "trial": 4
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 340.596,
+          "throughput_pods_per_s": 85.14,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B1-1000n-E2",
+      "recorded": {
+        "capacity_variance": "0.6",
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 1000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": "29",
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "recorded_trials": 5,
+      "trials": [
+        {
+          "acf_count": 90,
+          "acf_rate": 0.0031,
+          "bind_conflict_count": 90,
+          "bind_conflict_rate": 0.003,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 96.993,
+          "throughput_pods_per_s": 298.99,
+          "trial": 1
+        },
+        {
+          "acf_count": 84,
+          "acf_rate": 0.0029,
+          "bind_conflict_count": 84,
+          "bind_conflict_rate": 0.0028,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 46.948,
+          "throughput_pods_per_s": 617.7,
+          "trial": 2
+        },
+        {
+          "acf_count": 77,
+          "acf_rate": 0.0026,
+          "bind_conflict_count": 77,
+          "bind_conflict_rate": 0.0026,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 46.307,
+          "throughput_pods_per_s": 626.25,
+          "trial": 3
+        },
+        {
+          "acf_count": 61,
+          "acf_rate": 0.0021,
+          "bind_conflict_count": 61,
+          "bind_conflict_rate": 0.002,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 46.157,
+          "throughput_pods_per_s": 628.3,
+          "trial": 4
+        },
+        {
+          "acf_count": 62,
+          "acf_rate": 0.0021,
+          "bind_conflict_count": 62,
+          "bind_conflict_rate": 0.0021,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 46.464,
+          "throughput_pods_per_s": 624.14,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B1-1000n-E3",
+      "recorded": {
+        "capacity_variance": "0.6",
+        "conflict_penalty": 0.5,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 2,
+        "num_nodes": 1000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": "29",
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "recorded_trials": 5,
+      "trials": [
+        {
+          "acf_count": 3,
+          "acf_rate": 0.0001,
+          "bind_conflict_count": 71,
+          "bind_conflict_rate": 0.0024,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 577.016,
+          "throughput_pods_per_s": 50.26,
+          "trial": 1
+        },
+        {
+          "acf_count": 3,
+          "acf_rate": 0.0001,
+          "bind_conflict_count": 74,
+          "bind_conflict_rate": 0.0025,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 45.915,
+          "throughput_pods_per_s": 631.61,
+          "trial": 2
+        },
+        {
+          "acf_count": 11,
+          "acf_rate": 0.0004,
+          "bind_conflict_count": 112,
+          "bind_conflict_rate": 0.0037,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 46.463,
+          "throughput_pods_per_s": 624.16,
+          "trial": 3
+        },
+        {
+          "acf_count": 9,
+          "acf_rate": 0.0003,
+          "bind_conflict_count": 128,
+          "bind_conflict_rate": 0.0043,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 46.214,
+          "throughput_pods_per_s": 627.52,
+          "trial": 4
+        },
+        {
+          "acf_count": 8,
+          "acf_rate": 0.0003,
+          "bind_conflict_count": 158,
+          "bind_conflict_rate": 0.0052,
+          "expected_pods": 29000,
+          "is_timeout": false,
+          "scheduled_pods": 29000,
+          "scheduling_duration_s": 46.109,
+          "throughput_pods_per_s": 628.95,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B1-2000n-E1",
+      "recorded": {
+        "capacity_variance": "0.6",
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": "29",
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "recorded_trials": 5,
+      "trials": [
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 58000,
+          "is_timeout": true,
+          "scheduled_pods": 33647,
+          "scheduling_duration_s": 603.937,
+          "throughput_pods_per_s": 55.71,
+          "trial": 1
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 58000,
+          "is_timeout": true,
+          "scheduled_pods": 33737,
+          "scheduling_duration_s": 603.945,
+          "throughput_pods_per_s": 55.86,
+          "trial": 2
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 58000,
+          "is_timeout": true,
+          "scheduled_pods": 33931,
+          "scheduling_duration_s": 603.925,
+          "throughput_pods_per_s": 56.18,
+          "trial": 3
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 58000,
+          "is_timeout": true,
+          "scheduled_pods": 33610,
+          "scheduling_duration_s": 603.94,
+          "throughput_pods_per_s": 55.65,
+          "trial": 4
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 58000,
+          "is_timeout": true,
+          "scheduled_pods": 34196,
+          "scheduling_duration_s": 603.932,
+          "throughput_pods_per_s": 56.62,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B1-2000n-E2",
+      "recorded": {
+        "capacity_variance": "0.6",
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": "29",
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "recorded_trials": 5,
+      "trials": [
+        {
+          "acf_count": 129,
+          "acf_rate": 0.0022,
+          "bind_conflict_count": 129,
+          "bind_conflict_rate": 0.0022,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 148.686,
+          "throughput_pods_per_s": 390.08,
+          "trial": 1
+        },
+        {
+          "acf_count": 121,
+          "acf_rate": 0.0021,
+          "bind_conflict_count": 121,
+          "bind_conflict_rate": 0.002,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 106.228,
+          "throughput_pods_per_s": 546.0,
+          "trial": 2
+        },
+        {
+          "acf_count": 114,
+          "acf_rate": 0.002,
+          "bind_conflict_count": 114,
+          "bind_conflict_rate": 0.0019,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 105.909,
+          "throughput_pods_per_s": 547.64,
+          "trial": 3
+        },
+        {
+          "acf_count": 119,
+          "acf_rate": 0.002,
+          "bind_conflict_count": 119,
+          "bind_conflict_rate": 0.002,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 105.601,
+          "throughput_pods_per_s": 549.24,
+          "trial": 4
+        },
+        {
+          "acf_count": 107,
+          "acf_rate": 0.0018,
+          "bind_conflict_count": 107,
+          "bind_conflict_rate": 0.0018,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 106.243,
+          "throughput_pods_per_s": 545.92,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B1-2000n-E3",
+      "recorded": {
+        "capacity_variance": "0.6",
+        "conflict_penalty": 0.5,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 2,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": "29",
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "recorded_trials": 5,
+      "trials": [
+        {
+          "acf_count": 36,
+          "acf_rate": 0.0006,
+          "bind_conflict_count": 317,
+          "bind_conflict_rate": 0.0053,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 144.923,
+          "throughput_pods_per_s": 400.21,
+          "trial": 1
+        },
+        {
+          "acf_count": 24,
+          "acf_rate": 0.0004,
+          "bind_conflict_count": 217,
+          "bind_conflict_rate": 0.0037,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 105.843,
+          "throughput_pods_per_s": 547.98,
+          "trial": 2
+        },
+        {
+          "acf_count": 14,
+          "acf_rate": 0.0002,
+          "bind_conflict_count": 143,
+          "bind_conflict_rate": 0.0024,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 106.744,
+          "throughput_pods_per_s": 543.35,
+          "trial": 3
+        },
+        {
+          "acf_count": 25,
+          "acf_rate": 0.0004,
+          "bind_conflict_count": 207,
+          "bind_conflict_rate": 0.0035,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 110.75,
+          "throughput_pods_per_s": 523.7,
+          "trial": 4
+        },
+        {
+          "acf_count": 20,
+          "acf_rate": 0.0003,
+          "bind_conflict_count": 170,
+          "bind_conflict_rate": 0.0029,
+          "expected_pods": 58000,
+          "is_timeout": false,
+          "scheduled_pods": 58000,
+          "scheduling_duration_s": 105.462,
+          "throughput_pods_per_s": 549.96,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B1-5000n-E1",
+      "recorded": {
+        "capacity_variance": "0.6",
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": "29",
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "recorded_trials": 5,
+      "trials": [
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": true,
+          "scheduled_pods": 60350,
+          "scheduling_duration_s": 1460.229,
+          "throughput_pods_per_s": 41.33,
+          "trial": 1
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": true,
+          "scheduled_pods": 61832,
+          "scheduling_duration_s": 1460.253,
+          "throughput_pods_per_s": 42.34,
+          "trial": 2
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": true,
+          "scheduled_pods": 60715,
+          "scheduling_duration_s": 1460.235,
+          "throughput_pods_per_s": 41.58,
+          "trial": 3
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": true,
+          "scheduled_pods": 61250,
+          "scheduling_duration_s": 1460.225,
+          "throughput_pods_per_s": 41.95,
+          "trial": 4
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": true,
+          "scheduled_pods": 60699,
+          "scheduling_duration_s": 1460.24,
+          "throughput_pods_per_s": 41.57,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B1-5000n-E2",
+      "recorded": {
+        "capacity_variance": "0.6",
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": "29",
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "recorded_trials": 5,
+      "trials": [
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 691.116,
+          "throughput_pods_per_s": 209.81,
+          "trial": 1
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 533.017,
+          "throughput_pods_per_s": 272.04,
+          "trial": 2
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 422.655,
+          "throughput_pods_per_s": 343.07,
+          "trial": 3
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 485.923,
+          "throughput_pods_per_s": 298.4,
+          "trial": 4
+        },
+        {
+          "acf_count": 2,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 2,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 407.911,
+          "throughput_pods_per_s": 355.47,
+          "trial": 5
+        }
+      ]
+    },
+    {
+      "cell": "B1-5000n-E3",
+      "recorded": {
+        "capacity_variance": "0.6",
+        "conflict_penalty": 0.5,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 2,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": "29",
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "recorded_trials": 5,
+      "trials": [
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 3,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 536.047,
+          "throughput_pods_per_s": 270.5,
+          "trial": 1
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 411.032,
+          "throughput_pods_per_s": 352.77,
+          "trial": 2
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 440.793,
+          "throughput_pods_per_s": 328.95,
+          "trial": 3
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 3,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 425.971,
+          "throughput_pods_per_s": 340.4,
+          "trial": 4
+        },
+        {
+          "acf_count": 0,
+          "acf_rate": 0.0,
+          "bind_conflict_count": 0,
+          "bind_conflict_rate": 0.0,
+          "expected_pods": 145000,
+          "is_timeout": false,
+          "scheduled_pods": 145000,
+          "scheduling_duration_s": 427.117,
+          "throughput_pods_per_s": 339.49,
+          "trial": 5
+        }
+      ]
+    }
+  ],
+  "kind": "board",
+  "schema": "parkour-archive/v1"
+}

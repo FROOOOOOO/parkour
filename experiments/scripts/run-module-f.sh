@@ -150,7 +150,7 @@ Examples:
     --run-id F1-P-20260909-formal
 
   # Verify F2-E failure injection only; does not start the scheduling comparison matrix
-  ./experiments/scripts/run-module-f2-e.sh --injection-smoke-test \
+  ./experiments/scripts/run-module-f.sh --experiment F2-E --injection-smoke-test \
     --run-id F2-E-injection-smoke-20260909
 EOF
 }
@@ -3025,7 +3025,7 @@ metadata = {
         "failure_rate": 0.01 if experiment in ("F2-E", "F2-P") else 0,
         "failure_semantics": "post-bind terminal Failed; module-F evidence ledger records the failure before deleting the terminal Pod to release node capacity; controller creates replacement" if experiment in ("F2-E", "F2-P") else None,
         "failure_gate": "pre-cleanup Kubernetes API snapshot merged with the module-F failure ledger + Wilson 95% CI" if experiment in ("F2-E", "F2-P") else None,
-        "warning": "The current Dreal file comes from a synthetic F0. Until it is replaced by a profile calibrated on real workers, it must not be described as a real data-plane calibration result.",
+        "warning": "Dreal is derived from upstream Kubernetes scalability-CI percentile anchors (kwok-setup/stages/calibration); it must not be described as a measurement of this testbed's workers.",
     },
     "git_commit": commit,
 }
@@ -3759,11 +3759,11 @@ main() {
         echo "$EXPERIMENT fixed environment:"
         echo "  10000 KWOK nodes / 10000 Pods / 10 schedulers / HC-V V=0.6"
         if [[ "$EXPERIMENT" == "F1-E" || "$EXPERIMENT" == "F2-E" ]]; then
-            echo "  E2 = vanilla-E：event mode, M=1/diff, sync-period=0.1s, K=0, penalty=0"
-            echo "  E3 = ParKour-E：event mode, M=1/diff, sync-period=0.1s, K=2, QualityFirst, penalty=0.5"
+            echo "  E2 = vanilla-E: event mode, M=1/diff, sync-period=0.1s, K=0, penalty=0"
+            echo "  E3 = ParKour-E: event mode, M=1/diff, sync-period=0.1s, K=2, QualityFirst, penalty=0.5"
         else
-            echo "  P1 = vanilla-P：periodic globSync, G=1.0s, M=1, K=0, penalty=0"
-            echo "  P4 = ParKour-P：periodic globSync, G=1.0s, M=1, K=2, QualityFirst, penalty=0.5"
+            echo "  P1 = vanilla-P: periodic globSync, G=1.0s, M=1, K=0, penalty=0"
+            echo "  P4 = ParKour-P: periodic globSync, G=1.0s, M=1, K=2, QualityFirst, penalty=0.5"
         fi
         if [[ "$EXPERIMENT" == "F2-E" || "$EXPERIMENT" == "F2-P" ]]; then
             echo "  Dreal-F1 = the current four-bucket latency profile + 1% post-bind terminal startup failure"

@@ -4,10 +4,14 @@ This document describes how the ParKour cluster evaluation is structured: what
 each experiment board asks, which baselines it compares, how metrics are defined
 and collected, and which parameters are fixed versus swept.
 
-It is a design document, not a results report. No measurement results are
-distributed with this repository; every number a board produces is regenerated
-by running it. See [README.md](README.md) for the operational instructions and
-script inventory.
+It is a design document, not a results report. The published matrix, every cell
+with the parameters its runs used, is [matrix.md](matrix.md), generated from
+[registry.json](registry.json); where this document and the registry could
+disagree the registry wins. [reconciliation.md](reconciliation.md) records where
+this repository's figures and numbers differ from the camera-ready paper. Raw
+measurement results are not distributed; the per-trial records behind the
+paper's cluster figures and overhead table are, under [archive/](archive/). See
+[README.md](README.md) for the operational instructions and script inventory.
 
 ## Contents
 
@@ -18,50 +22,46 @@ script inventory.
 5. [Board A: parameter sensitivity](#5-board-a-parameter-sensitivity)
 6. [Board B: end-to-end comparison](#6-board-b-end-to-end-comparison)
 7. [Board C: ablation](#7-board-c-ablation)
-8. [Board D: microbenchmark](#8-board-d-microbenchmark)
-9. [Board E: real-workload scheduling quality](#9-board-e-real-workload-scheduling-quality)
+8. [Board D: overhead](#8-board-d-overhead)
+9. [Board E: application-layer check](#9-board-e-application-layer-check)
 10. [Board F: data-plane latency injection](#10-board-f-data-plane-latency-injection)
 11. [Board G: production trace profiling](#11-board-g-production-trace-profiling)
-12. [Board H: synchronization-channel freshness](#12-board-h-synchronization-channel-freshness)
-13. [Parameter matrix](#13-parameter-matrix)
+12. [Parameter matrix](#12-parameter-matrix)
 
 ---
 
 ## 1. Goals
 
-Validate the proposed parallel-scheduling mechanisms — **multicandidate
-selection** and the **scoring strategy family** (QualityFirst / LatencyFirst /
-WeightedRandom, with a conflict-rate penalty) — on a real Kubernetes cluster,
-and compare them systematically against several baselines.
+Validate the two proposed mechanisms — **multicandidate fallback**, which hands
+the binder a score-ordered list of K candidate nodes, and the **conflict-rate
+penalty**, which lowers the score of nodes where binds recently failed, with
+weight w — on a real Kubernetes cluster, under both event-driven and periodic
+synchronization, and compare them systematically against the baselines of
+section 4.
 
 > Local state predictive update was removed from the design. It caused ghost
 > resource deadlock in the Kubernetes implementation, and simulation showed its
 > benefit to be negligible.
 
-**Strategy / paradigm compatibility.**
-
-- Event-driven synchronization: `QualityFirst` or `WeightedRandom`.
-  `LatencyFirst` depends on per-partition staleness, which is near-constant
-  under event-driven synchronization and therefore carries no signal.
-- Periodic synchronization: all of `QualityFirst`, `LatencyFirst`,
-  `WeightedRandom`.
-- `QualityFirst` and `WeightedRandom` share the scoring formula
-  `adjusted = (1-p)*normScore + p*(1-conflictRate)`. The penalty weight `p` is
-  swept under `QualityFirst`; `WeightedRandom` reuses the QualityFirst optimum.
+**Scoring strategy.** Every published cell uses `QualityFirst`, whose adjusted
+score is `adjusted = (1-w)*normScore + w*(1-conflictRate)`. The scheduler also
+implements `LatencyFirst`, `WeightedRandom` and partition-grain ParSync variants;
+no published result uses them. `LatencyFirst` depends on per-partition
+staleness, which is near-constant under event-driven synchronization and
+therefore carries no signal there.
 
 The boards answer these questions:
 
 | # | Question | Board |
 |---|---|---|
-| 1 | What is the best parameter combination (candidate count K, strategy, penalty weight p)? | A |
-| 2 | How much do the mechanisms improve scheduling speed, conflict rate and quality over each baseline? | B |
-| 3 | What does each mechanism contribute on its own, and do they compose? | C |
-| 4 | Is the additional resource and time cost acceptable? | D |
-| 5 | How does the effect change with cluster scale and load pressure? | B |
+| 1 | How sensitive is the conflict rate to the candidate-list length K and the penalty weight w? | A |
+| 2 | How much do the mechanisms improve throughput and the conflict rate over each baseline? | B |
+| 3 | What does each mechanism contribute on its own, under each paradigm, and do they compose? | C |
+| 4 | Is the additional latency and resource cost acceptable? | D |
+| 5 | How does the effect change with cluster scale, scheduler count and contention? | B |
 | 6 | Does scheduling quality show up in real application performance? | E |
 | 7 | Do the conflict-rate and throughput gains survive an injected post-bind data-plane latency calibrated against real-node public measurements (and a small startup failure rate)? | F |
 | 8 | Do a production trace's arrival intensity and request profile support the burst operating point, and do the two synthetic scenarios cover it? | G |
-| 9 | Is the conflict-rate feedback channel actually fresher than the full snapshot channel? | H |
 
 ---
 
@@ -72,13 +72,14 @@ The boards answer these questions:
 | Simulation dimension | Simulation metric | Cluster metric | Source |
 |---|---|---|---|
 | **Scheduling speed** | finished_scheduling_time | Time until the last target pod completes Bind (T_bind_total) | Binder success counter + pod lifecycle watch |
-| | throughput (tasks/s) | Control-plane binding throughput (Q_bind, pods/s) | CL2 SchedulingThroughput / Binder success counter |
-| | — | Per-pod end-to-end scheduling latency P50/P99 (T_e2e) | `scheduler_e2e_scheduling_duration_seconds` |
+| | throughput (tasks/s) | Control-plane binding throughput (Q_bind, pods/s) | CL2 saturation window / Binder success counter |
+| | — | Per-pod end-to-end scheduling latency P50/P99 (T_e2e) | `scheduler_pod_scheduling_sli_duration_seconds` |
 | | — | Scheduling algorithm latency P50/P99 (T_algo) | `scheduler_scheduling_algorithm_duration_seconds` |
 | **Data plane** | — | Bind-to-Ready/Failed latency (T_data) | Pod lifecycle watch |
 | | — | Create-to-Ready latency and Ready throughput (T_user, Q_ready) | Pod lifecycle watch / CL2 PodStartupLatency |
 | | — | Data-plane startup failure rate and rebuild amplification | Pod lifecycle watch + Deployment status |
-| **Conflict rate** | conflict_rate | Binding conflict rate (R_conflict) | Binder logs / custom Prometheus metric |
+| **Conflict rate** | conflict_rate | All-candidates-failed rate (ACF): the share of scheduling attempts whose every candidate failed, forcing a full rescheduling cycle | `parasched_all_candidates_failed_total` |
+| | — | Candidate-level bind conflict rate (BCR, R_conflict) | `parasched_bind_result_total{result="conflict"}` |
 | | total_conflicts | Total binding failures (N_conflict) | `scheduler_schedule_attempts_total{result="error"}` |
 | | — | Distribution of scheduling attempts per pod | `scheduler_pod_scheduling_attempts` |
 | | — | Which candidate rank was adopted | `parasched_candidate_rank_accepted` |
@@ -113,9 +114,13 @@ experiments.
 | P0 | Throughput, conflict rate, total scheduling time | Core conclusions |
 | P0 | Per-pod scheduling latency P50/P99 | Core conclusions |
 | P0 | Bind-to-Ready latency distribution, data-plane failure rate (Board F) | Data-plane conclusions |
-| P1 | CPU/memory usage, scheduling quality (score + balance) | Microbenchmark |
+| P1 | CPU/memory usage, scheduling quality (score + balance) | Overhead (Board D) and quality |
 | P1 | Real application performance (Board E) | Direct evidence for scheduling quality |
 | P2 | Sync latency, state freshness, API latency | Supporting analysis |
+
+The collector (`collect-metrics.sh`) records every metric of a phase when the
+trial ends, including the quality histograms; nothing is re-queried from
+Prometheus afterwards.
 
 ---
 
@@ -251,17 +256,18 @@ Event-driven group:
 | ID | Name | Schedulers | Description |
 |---|---|---|---|
 | E1 | Single kube-scheduler | 1 | Native single scheduler; no parallelism, no conflict |
-| E2 | Godel-vanilla | N | Native multi-instance Godel, no optimization |
-| E3 | Proposed-EventDriven | N | Multicandidate + penalty (no ParSync) |
+| E2 | Vanilla (event-driven) | N | ParKour's schedulers with both mechanisms disabled |
+| E3 | ParKour (event-driven) | N | Multicandidate + penalty |
+| — | Godel | N | The upstream Godel release; each scheduler owns a disjoint node partition of about 1/N of the cluster |
 
 Periodic group:
 
 | ID | Name | Schedulers | Description |
 |---|---|---|---|
-| P1 | globSync | N | All schedulers synchronize everything at once, period G |
-| P2 | ParSync-sameSync | N | All schedulers synchronize the same partition at the same time |
-| P3 | ParSync-diffSync | N | Schedulers stagger across different partitions |
-| P4 | Proposed-Periodic | N | Full method: multicandidate + penalty + ParSync |
+| P1 | Vanilla (periodic), globSync | N | All schedulers apply the whole cluster's snapshot every G |
+| P2 | sameSync (ParSync) | N | All schedulers synchronize the same partition at the same time |
+| P3 | diffSync (ParSync) | N | Schedulers stagger across different partitions |
+| P4 | ParKour (periodic) | N | Multicandidate + penalty, on globSync |
 
 Why each one is present:
 
@@ -269,16 +275,20 @@ Why each one is present:
   best placement quality, but its throughput is capped by one instance. It shows
   at what scale parallel scheduling starts to win.
 - **E2** shows how severe conflict is under event-driven synchronization with no
-  optimization at all. It uses `strategy=QualityFirst, p=0, K=0`, which is
-  equivalent to plain score ordering.
-- **E3** measures the mechanisms under near-real-time synchronization, with
-  `candidate_k = K*`, `strategy = strategy_E*`, `penalty_weight = p_E*` from
-  Board A and `enable_parsync=false`.
+  mechanism at all: `QualityFirst` with K=1 (no fallback) and w=0, which is
+  plain score ordering.
+- **E3** measures the mechanisms under near-real-time synchronization, with K=3
+  (two fallbacks) and w=0.5.
+- **Godel** is the published parallel scheduler that avoids conflict by
+  partitioning the nodes statically; it runs as the baseline of boards B1, B2
+  and B3.
 - **P1** corresponds to the simulator's globSync baseline and to traditional
-  shared-state designs such as Omega: `sync_pattern=glob, num_partitions=1`.
+  shared-state designs such as Omega: `sync_pattern=glob`, one partition.
 - **P2** and **P3** correspond to the ParSync paper's sameSync and diffSync
   modes, with multicandidate and penalty disabled.
-- **P4** is the complete method under periodic synchronization.
+- **P4** is the complete method under periodic synchronization. It runs on
+  globSync: the partition rotation of sameSync and diffSync raises the average
+  staleness, and globSync keeps partition-sync cost out of the comparison.
 
 ### 4.3 Configuration tables
 
@@ -287,29 +297,26 @@ Event-driven group:
 | Setting | E1 | E2 | E3 |
 |---|---|---|---|
 | Schedulers | 1 | N | N |
-| enable_multicandidate | no | no | yes |
-| candidate_k | — | — | **K\*** (Board A) |
-| strategy | — | — | **strategy_E\*** in {QualityFirst, WeightedRandom} |
-| penalty_weight (p) | — | — | **p_E\*** (swept under QF only) |
-| enable_parsync | no | no | no |
+| K (fallbacks) | 1 (0) | 1 (0) | **3 (2)** |
+| strategy | QualityFirst | QualityFirst | QualityFirst |
+| penalty weight w | 0 | 0 | **0.5** |
+| sync period | 0.1 s (event-driven) | 0.1 s | 0.1 s |
 
 Periodic group:
 
 | Setting | P1 | P2 | P3 | P4 |
 |---|---|---|---|---|
 | Schedulers | N | N | N | N |
-| enable_multicandidate | no | no | no | yes |
-| candidate_k | — | — | — | **K\*** (Board A) |
-| strategy | QF (p=0) | QF (p=0) | QF (p=0) | **strategy_P\*** |
-| penalty_weight (p) | — | — | — | **p_P\*** |
-| enable_parsync | yes | yes | yes | yes |
-| sync_pattern | glob | same | diff | diff |
-| num_partitions | 1 | M | M | M |
-| sync_period | G | G | G | G |
+| K (fallbacks) | 1 (0) | 1 (0) | 1 (0) | **3 (2)** |
+| strategy | QualityFirst | QualityFirst | QualityFirst | QualityFirst |
+| penalty weight w | 0 | 0 | 0 | **0.5** |
+| sync_pattern | glob | same | diff | glob |
+| partitions | 1 | M | M | 1 |
+| sync period | G | G | G | G |
 
-Defaults: N = 5 schedulers, M = 5 partitions, G = 1.0 s. The starred parameters
-are determined by Board A; boards that use E3 or P4 do not start until Board A
-has produced `board-A-optima.yaml`.
+Defaults: N = 10 schedulers, M = 10 partitions, G = 1.0 s. The runner records K
+as its number of fallbacks, `num_backup` = K − 1; [matrix.md](matrix.md) shows
+both.
 
 ---
 
@@ -317,106 +324,43 @@ has produced `board-A-optima.yaml`.
 
 ### 5.1 Objective
 
-Before the large downstream comparison matrices start, sweep the two paradigms
-separately under high contention to fix the parameters E3 and P4 will use, so
-that the end-to-end comparison does not understate the method through a poor
-parameter choice.
+Show how the conflict rate responds to the two knobs, K and w, under both
+paradigms, and so whether the mechanisms' gains depend on choosing them well.
+The paper's robustness figure draws the two sweeps.
 
-Parameters to decide:
+### 5.2 Sweeps
 
-- **K\***: the multicandidate backup count;
-- **strategy\***: QualityFirst vs. WeightedRandom (event-driven), plus
-  LatencyFirst (periodic);
-- **p\***: the penalty weight, meaningful only under QualityFirst
-  (WeightedRandom reuses the same optimum; LatencyFirst ignores p).
+Each sweep varies one knob and holds the other, under event-driven
+synchronization and each of the three periodic patterns (globSync, sameSync and
+diffSync), so every setting has four arms:
 
-### 5.2 Sweep method
+1. **K sweep** (board `K`): `w = 0.3`, `K in {1, 2, 3, 5}` (`num_backup` 0, 1, 2
+   and 4); 16 cells.
+2. **w sweep** (board `P`): `K = 5`, `w in {0, 0.1, 0.3, 0.5, 0.7}`; 20 cells.
 
-A greedy per-dimension sweep: fix each dimension at the previous step's optimum
-before sweeping the next. This reduces the sweep from a full factorial
-(3x5x5 = 75 configurations) to a linear 3+5+5 = 13 per paradigm.
-
-1. **K sweep** — fix `strategy=QualityFirst, p=0.3`, sweep `K in {0, 1, 2, 4}`.
-   Choose the smallest K at which the conflict rate has stopped falling
-   materially but binder fallback counts have not risen materially.
-2. **Strategy sweep** — fix `K=K*, p=0.3`, sweep every strategy available to the
-   paradigm; take the best combined throughput/conflict result.
-3. **p sweep** — fix `K=K*, strategy=QualityFirst` (always under QF, since
-   WeightedRandom shares the optimum), sweep `p in {0.0, 0.1, 0.3, 0.5, 0.7}`.
-4. If `strategy* = WeightedRandom`, run one confirmation round at
-   `K=K*, strategy=WeightedRandom, p=p*`.
-
-> **Greedy risk.** The K sweep runs at `p=0.3`, which may not be the final `p*`.
-> After all three dimensions are done, check whether `p*` falls inside
-> (0.1, 0.5); if it lands near a boundary, re-run one K configuration to verify.
+The published configuration, K=3 and w=0.5, sits where both sweeps have
+flattened: most of the ACF reduction is already realized at K=3, and every
+`w >= 0.1` lies within a narrow band.
 
 ### 5.3 Setup
 
-Shared by both paradigms: 10,000 nodes / 10,000 pods / 5 schedulers, the HC-V
-high-contention scenario at V=0.6 (24 CPU and 192 Gi per pod, 1 pod/node,
-heterogeneous capacity), CL2 `cl2-saturation-only.yaml` with a 500 deployments/s
-burst, 3 trials per configuration reported as mean and standard deviation.
+10,000 nodes / 10,000 pods / 10 schedulers, the HC-V high-contention scenario at
+V=0.6 (24 CPU and 192 Gi per pod, 1 pod/node, heterogeneous capacity), CL2
+`cl2-saturation-only.yaml` with a 500 deployments/s burst, 3 trials per cell.
+Periodic cells use G=1.0 s; globSync runs one partition, sameSync and diffSync
+ten.
 
 > **Why capacity variance V > 0.** With homogeneous shard capacity (V=0), the
-> baseline ACF at 5 schedulers is only a few percent, which is not enough spread
-> for the K / strategy / p sweep to produce a distinguishable signal. V=0.6
-> distributes shard CPU capacity over [24, 47] while holding the cluster's total
-> pod capacity at N, which makes LeastAllocated scoring show a clear gradient
-> even on an empty cluster and lifts the baseline conflict rate into a range
-> where tuning is measurable. Among the piloted values {0, 0.3, 0.6, 1.0}, V=0.6
-> had the lowest coefficient of variation across trials and still sat below the
-> saturation point at V=1.0, so it is the default for all downstream boards.
-> V=0 remains available via `--variance 0` as a control, to confirm that V=0.6
-> does not reorder the methods.
-
-Paradigm-specific parameters:
-
-| Paradigm | sync-period | partitions (M) | sync-pattern | Note |
-|---|---|---|---|---|
-| Event-driven | 0.1 s | — | — | ParSync disabled |
-| Periodic | 1.0 s | 5 | diff | Same parameters as P3 |
-
-### 5.4 Matrix
-
-Event-driven (Board S-E):
-
-| Sub-experiment | Fixed | Swept | Values | Configurations |
-|---|---|---|---|---|
-| S-E-K | strategy=QualityFirst, p=0.3 | K | {0, 1, 2, 4} | 4 |
-| S-E-Strategy | K=K\*, p=0.3 | strategy | {QualityFirst, WeightedRandom} | 2 |
-| S-E-P | K=K\*, strategy=QualityFirst | p | {0.0, 0.1, 0.3, 0.5, 0.7} | 5 |
-| S-E-Confirm | K=K\*, strategy=WR, p=p\* | — | only if strategy\*=WR | 0-1 |
-
-Periodic (Board S-P):
-
-| Sub-experiment | Fixed | Swept | Values | Configurations |
-|---|---|---|---|---|
-| S-P-K | strategy=QualityFirst, p=0.3 | K | {0, 1, 2, 4} | 4 |
-| S-P-Strategy | K=K\*, p=0.3 | strategy | {QualityFirst, LatencyFirst, WeightedRandom} | 3 |
-| S-P-P | K=K\*, strategy=QualityFirst | p | {0.0, 0.1, 0.3, 0.5, 0.7} | 5 |
-| S-P-Confirm | K=K\*, strategy=strategy\*, p=p\* | — | only if strategy\* is WR or LF | 0-1 |
-
-### 5.5 Selection criteria
-
-| Metric | Role | Source |
-|---|---|---|
-| Conflict rate `R_conflict` | primary | `parasched_bind_attempts_total{result="conflict"}` |
-| Throughput | primary | `scheduler_schedule_attempts_total{result="scheduled"}` |
-| P99 scheduling latency | secondary | `scheduler_e2e_scheduling_duration_seconds` |
-| Rank-0 hit rate | secondary | `parasched_candidate_rank_accepted` |
-| Mean scheduler CPU | constraint | `container_cpu_usage_seconds_total` |
-
-- **K\***: the largest K before the conflict rate's relative improvement over
-  the previous step falls below 10%, subject to CPU cost under 2x vanilla.
-- **strategy\***: at the same K, the lowest conflict rate whose throughput is
-  within 5% of the best.
-- **p\***: at the same K and strategy, the p minimizing
-  `conflict_rate * (1 / throughput)`.
-
-### 5.6 Output
-
-The board produces [`board-A-optima.yaml`](board-A-optima.yaml), recording each
-paradigm's optimum. Boards B, C and E read E3 and P4 configurations from it.
+> baseline ACF is only a few percent, which is not enough spread for the sweeps
+> to produce a distinguishable signal. V=0.6 spreads the ten shards' CPU
+> capacity over 24 to 44 CPU (eight distinct values) while holding the
+> cluster's total pod capacity at N, which makes LeastAllocated scoring show a
+> clear gradient even on an empty cluster and lifts the baseline conflict rate
+> into a range where the mechanisms' effect is measurable. Among the piloted
+> values {0, 0.3, 0.6, 1.0}, V=0.6 had the lowest coefficient of variation
+> across trials and still sat below the saturation point at V=1.0, so every
+> published cell uses it. `run-experiment.sh --variance 0` still runs the
+> homogeneous control.
 
 ---
 
@@ -441,7 +385,7 @@ scenarios:
 | Pod CPU request | 1000m | 24000m |
 | Pod memory request | 8Gi | 192Gi |
 | Pods per node (M) | 29 | **1** |
-| Capacity variance (V) | 0 (homogeneous) | **0.6** (default; 0 / 0.3 / 1.0 available) |
+| Capacity variance (V) | 0.6 | **0.6** |
 | Paper narrative | Ordinary microservice workload | Exclusive workload (ML training, HPC, large databases) |
 | Simulation analogue | pod_per_node >> 8 (conflict near 0) | pod_per_node = 1 plus node score variance |
 
@@ -449,8 +393,8 @@ scenarios:
 > determinant of the conflict rate: it is high at one pod per node, drops sharply
 > at two, and becomes negligible from four upward. HC-V therefore fixes M=1 and
 > adds capacity heterogeneity on top: the CPU capacity of the 10 KWOK shards is
-> spread over [24, 47] by a discretized log-normal, while the cluster's total pod
-> capacity stays equal to N so the strict one-pod-per-node semantics is
+> spread over 24 to 44 CPU by a discretized log-normal, while the cluster's total
+> pod capacity stays equal to N so the strict one-pod-per-node semantics is
 > preserved. This is the cluster analogue of the simulator's
 > `slot_score_variance`.
 >
@@ -460,16 +404,23 @@ scenarios:
 > deployments/s, far above a single scheduler's throughput, so the scheduling
 > queue saturates immediately. Per-shard capacity is injected into CL2 through
 > testoverrides generated by
-> `experiments/scripts/generate-hetero-config.py --variance V`.
+> `experiments/scripts/generate-hetero-config.py --variance V`. The
+> low-contention scenario uses `cl2-schedule-pods.yaml`, which has a latency
+> phase after the saturation phase; only the saturation phase is measured.
 
 ### 6.3 Scenarios
+
+All three run with 10 schedulers unless the scenario varies the count, 5 trials
+per cell. The Godel baseline runs at the same points with 10 schedulers (board
+`godel` in [matrix.md](matrix.md)).
 
 #### B1: Low-contention scale-out
 
 Show that (a) the single-scheduler throughput bottleneck grows with scale, and
-(b) the mechanisms match vanilla throughput where conflict is rare.
+(b) the mechanisms match vanilla throughput where conflict is rare. Figure:
+`scalability-lowcontention`.
 
-Fix N=5 schedulers (E2/E3) and vary the node count:
+Vary the node count:
 
 | Scale | Nodes | Pods (29/node) |
 |---|---|---|
@@ -482,19 +433,21 @@ Fix N=5 schedulers (E2/E3) and vary the node count:
 > the following experiment. It is therefore excluded from the low-contention
 > scenario. High contention has pods = nodes and is not affected.
 
-Groups: E1, E2, E3, 3 trials each, event-driven only. Report throughput and
-total scheduling time; conflict rate is a reference only, as it is expected to
-be near zero. Periodic synchronization is not tested here, because with almost
-no conflict the paradigms are indistinguishable and the point of the scenario is
-the chain "a single scheduler is not enough -> parallelism is needed -> the
-mechanisms do not cost throughput".
+Groups: E1, E2, E3, event-driven only. Report throughput and total scheduling
+time; conflict rate is a reference only, as it is expected to be near zero.
+Periodic synchronization is not tested here, because with almost no conflict the
+paradigms are indistinguishable and the point of the scenario is the chain "a
+single scheduler is not enough -> parallelism is needed -> the mechanisms do not
+cost throughput".
 
 #### B2: High-contention scale-out
 
 Show that (a) vanilla parallel scheduling conflicts heavily, and (b) the
-mechanisms cut the conflict rate and raise useful throughput.
+mechanisms cut the conflict rate and raise useful throughput. Figure:
+`pareto-all-scales`; the 20,000-node runs also feed `occupancy-intervals-1col`,
+and the overhead table (Board D) reads the runs at 10,000 and 20,000 nodes.
 
-Fix N=5 schedulers and vary the node count:
+Vary the node count:
 
 | Scale | Nodes | Pods (1/node) |
 |---|---|---|
@@ -503,20 +456,21 @@ Fix N=5 schedulers and vary the node count:
 | XL | 10,000 | 10,000 |
 | XXL | 20,000 | 20,000 |
 
-Groups: E1, E2, E3 and P1, P2, P3, P4, 3 trials each. Report throughput,
-conflict rate, total conflict count and total scheduling time.
+Groups: E1, E2, E3 and P1, P2, P3, P4. Report throughput, conflict rate, total
+conflict count and total scheduling time.
 
 #### B3: High-contention scheduler scale-out
 
 Show that the conflict rate worsens as scheduler instances are added, and that
-the mechanisms stay robust under higher concurrency.
+the mechanisms stay robust under higher concurrency. Figure:
+`scalability-schedulers`.
 
 Fix 10,000 nodes / 10,000 pods (HC-V, V=0.6) and vary the scheduler count over
 {2, 4, 6, 8, 10}.
 
-Groups: E2, E3 (event-driven) and P3, P4 (periodic), 3 trials each. E1 is
-omitted because its throughput and conflict rate do not vary with the scheduler
-count and B1 already provides the reference.
+Groups: E2, E3 (event-driven) and P1, P4 (periodic globSync). E1 is omitted
+because its throughput and conflict rate do not vary with the scheduler count
+and B1 already provides the reference.
 
 Report the throughput scaling ratio and the conflict rate against instance
 count.
@@ -538,123 +492,103 @@ individual and combined benefit.
 - The ablation runs **only under high contention**. With low contention the
   conflict rate is so low that the mechanisms are indistinguishable.
 - It runs **under both synchronization paradigms**, to show generality.
-- All "+P" groups use Board A's `p*`; all "+M" groups use Board A's `K*`. The
-  parameter sweep itself lives in Board A and is not repeated here.
+- The mechanism settings are the published ones, K=3 and w=0.5; Board A shows
+  how the result responds to each.
 
 ### 7.2 Combinations
 
 Event-driven (Group Ab-E), based on E2, all with `strategy=QualityFirst` so the
 +M / +P / +MP semantics stay clean:
 
-| ID | Configuration | K | p |
+| ID | Configuration | K (fallbacks) | w |
 |---|---|---|---|
-| Ab-E0 | E2 (baseline) | 0 | 0 |
-| Ab-E1 | +M | K\* | 0 |
-| Ab-E2 | +P | 0 | p_E\* |
-| Ab-E3 | +MP (E3) | K\* | p_E\* |
+| Ab-E0 | E2 (baseline) | 1 (0) | 0 |
+| Ab-E1 | +M | 3 (2) | 0 |
+| Ab-E2 | +P | 1 (0) | 0.5 |
+| Ab-E3 | +MP (E3) | 3 (2) | 0.5 |
 
-Periodic (Group Ab-P), based on P3, also fixed at `strategy=QualityFirst`:
+Periodic (Group Ab-P), based on P1 (globSync), also at `strategy=QualityFirst`:
 
-| ID | Configuration | K | p |
+| ID | Configuration | K (fallbacks) | w |
 |---|---|---|---|
-| Ab-P0 | P3 (baseline) | 0 | 0 |
-| Ab-P1 | +M | K\* | 0 |
-| Ab-P2 | +P | 0 | p_P\* |
-| Ab-P3 | +MP (P4-QF) | K\* | p_P\* |
+| Ab-P0 | P1 (baseline) | 1 (0) | 0 |
+| Ab-P1 | +M | 3 (2) | 0 |
+| Ab-P2 | +P | 1 (0) | 0.5 |
+| Ab-P3 | +MP (P4) | 3 (2) | 0.5 |
 
-> If Board A selects `strategy_P* != QualityFirst`, Ab-P3 is a forced-QF ablation
-> control only, and Boards B and E use the real `strategy_P*` for P4.
+Figures: `ablation-quality-a` (ACF, candidate-level bind conflict rate and
+throughput) and `ablation-quality-bc` (placement quality, from the quality
+histograms the collector records).
 
 ### 7.3 Setup
 
-10,000 nodes / 10,000 pods / 5 schedulers, HC-V at V=0.6. Each group runs 3
-trials. Periodic groups use G=1.0 s and M=5.
+10,000 nodes / 10,000 pods / 10 schedulers, HC-V at V=0.6. Each cell runs 5
+trials. Periodic cells use G=1.0 s and one partition.
 
 ---
 
-## 8. Board D: Microbenchmark
+## 8. Board D: Overhead
 
 ### 8.1 Objective
 
-Quantify the extra cost of multicandidate and penalty, and show it is
-negligible.
+Quantify the extra latency and resource cost of multicandidate and penalty, and
+show it is small.
 
-D1, D2 and D3 all **reuse the Prometheus data of Boards B and C** and need no
-independent rounds: container resource usage, per-stage scheduling duration and
-Dispatcher/Binder costs are collected continuously during every round, and only
-need to be extracted by time window during analysis. Only D4 needs dedicated
-rounds.
+The board has **no runs of its own**. The collector records every metric below
+in each saturation phase, and the paper's overhead table reads them from the B2
+runs at 10,000 nodes: Vanilla and ParKour under each paradigm, and diffSync. Its
+text also compares the periodic arms' algorithm latency at 20,000 nodes. The
+same metrics exist for every other run.
 
 ### 8.2 D1: Scheduler resource cost
 
-| Source | Dimensions covered | Extracted |
-|---|---|---|
-| B2 | E1/E2/E3/P1-P4, 2,000-20,000 nodes | CPU and memory against cluster scale |
-| B3 | 2/4/6/8/10 schedulers | CPU and memory against instance count |
-| C | Mechanism on/off combinations | Incremental cost of each mechanism |
+- CPU: `rate(container_cpu_usage_seconds_total{container="scheduler", namespace="para-system"}[1m])`
+- Memory: `container_memory_rss{container="scheduler", namespace="para-system"}`
 
-Metrics, extracted at 10 s granularity over the experiment window:
-
-- `rate(container_cpu_usage_seconds_total{container="scheduler", namespace="para-system"}[1m])`
-- `container_memory_rss{container="scheduler", namespace="para-system"}`
+Both are range queries over the saturation window; a trial's value is each
+scheduler pod's last sample in the window, summed over the pods. CPU efficiency
+is throughput over scheduler CPU, in scheduled pods per second per core, which
+accounts for a configuration that places more pods by doing more work.
 
 ### 8.3 D2: Per-pod scheduling cost
 
-| Stage | Metric |
-|---|---|
-| Total algorithm time | `scheduler_scheduling_algorithm_duration_seconds` |
-| Filter | `scheduler_framework_extension_point_duration_seconds{extension_point="Filter"}` |
-| Score | `scheduler_framework_extension_point_duration_seconds{extension_point="Score"}` |
-| Candidate selection | `scheduler_parasched_candidate_selection_duration_seconds` |
+| Stage | Metric | Reported |
+|---|---|---|
+| Algorithm time | `scheduler_scheduling_algorithm_duration_seconds` | P99 |
+| End to end | `scheduler_pod_scheduling_sli_duration_seconds` | P99 |
+| Candidate selection | `scheduler_parasched_candidate_selection_duration_seconds` | diagnostic |
 
-Compared as E2 vs. E3 and P3 vs. P4.
+Percentiles come from histogram snapshots: the bucket counters are read at the
+start of the saturation window and after its end, and the P99 is interpolated
+from the difference, so the value does not depend on the scrape interval.
 
 ### 8.4 D3: Dispatcher and Binder cost
 
-Dispatcher:
+The binder's and the dispatcher's CPU are read as the schedulers' are, and the
+text reports their range across the five configurations. The collector also
+records diagnostics that explain a cost but are not reported:
 
-| Metric | PromQL |
-|---|---|
-| Dispatch throughput | `rate(parasched_dispatch_total{result="success"}[1m])` |
-| Dispatch failure rate | `rate(parasched_dispatch_total{result="error"}[1m]) / rate(parasched_dispatch_total[1m])` |
-| Dispatch latency P50/P99 | `histogram_quantile(0.99, rate(parasched_dispatch_duration_seconds_bucket[5m]))` |
-| Queue depth | `parasched_dispatcher_queue_depth` |
-| Scheduler load balance | `stddev(parasched_dispatcher_scheduler_inflight)` |
-
-Binder:
-
-| Metric | PromQL |
-|---|---|
-| Bind throughput | `rate(parasched_bind_attempts_total{result="success"}[1m])` |
-| Bind conflict rate | `rate(parasched_bind_attempts_total{result="conflict"}[1m]) / rate(parasched_bind_attempts_total[1m])` |
-| Bind latency P50/P99 | `histogram_quantile(0.99, rate(parasched_bind_duration_seconds_bucket[5m]))` |
-| Candidate rank distribution | `parasched_candidate_rank_accepted` |
-| All-candidates-failed rate | `rate(parasched_all_candidates_failed_total[1m])` |
+| Component | Metric | PromQL |
+|---|---|---|
+| Dispatcher | Dispatch throughput | `rate(parasched_dispatch_total{result="success"}[1m])` |
+| | Dispatch latency P50/P99 | `histogram_quantile(0.99, rate(parasched_dispatch_duration_seconds_bucket[5m]))` |
+| | Queue depth | `parasched_dispatcher_queue_depth` |
+| Binder | Bind latency P50/P99 | `histogram_quantile(0.99, rate(parasched_bind_duration_seconds_bucket[5m]))` |
+| | Candidate rank distribution | `parasched_candidate_rank_accepted` |
+| | All-candidates-failed rate | `rate(parasched_all_candidates_failed_total[1m])` |
 
 What to watch for:
 
 - Dispatch latency should stay under 1 ms (it is only an annotation patch); a
   P99 above 5 ms indicates a bottleneck.
-- Bind latency should grow linearly in `candidate_k` (at most one extra API call
-  per additional candidate).
+- Bind latency should grow linearly in K (at most one extra API call per
+  additional candidate).
 - Queue depth should approach zero in steady state; sustained growth means too
   few Dispatcher workers.
-- Per-instance scheduler in-flight counts should differ by under 10%.
-
-### 8.5 D4: Synchronization paradigm cost
-
-| Paradigm | Configuration |
-|---|---|
-| Event-driven | kube-scheduler / Godel-vanilla, informer List/Watch |
-| Global periodic | globSync, G=5 s |
-| Partitioned periodic | ParSync, P=10, G=5 s |
-
-Metrics: `parasched_sync_duration_seconds`, the incremental API server request
-volume caused by synchronization, and `parasched_partition_staleness_seconds`.
 
 ---
 
-## 9. Board E: Real-Workload Scheduling Quality
+## 9. Board E: Application-Layer Check
 
 ### 9.1 Objective
 
@@ -664,26 +598,26 @@ cannot run real containers, so this is the one thing the emulated experiments
 cannot provide.
 
 It is a supplementary check on scheduling quality. The main evaluation remains
-the large-scale KWOK experiments.
+the large-scale KWOK experiments, and the paper's discussion reports this board
+as evidence against a gross regression, not as a measurement of benefit.
 
 ### 9.2 Matrix
 
-2 strategies x 3 stress profiles x 5 trials = 30 benchmark rounds. Each round
-runs three benchmarks concurrently for 180 s.
+4 methods x 3 stress profiles x 3 trials = 36 trials, with 5 scheduler
+instances on three workers. Each trial deploys 18 nginx, 18 redis and 1 mysql
+replicas and runs the three benchmarks concurrently for 180 s.
 
-| ID | Strategy | Stress profile | What it shows |
-|---|---|---|---|
-| RW-E2-none | Godel-vanilla | none | E2 baseline without stress |
-| RW-E2-mild | Godel-vanilla | mild | E2 ignores a 2-CPU gradient (it sees score only, not penalty) |
-| RW-E2-heavy | Godel-vanilla | heavy | E2 piles onto squeezed nodes under a strong gradient |
-| RW-E3-none | Proposed-EventDriven | none | With no conflict signal, E3 should match E2 (no adverse effect) |
-| RW-E3-mild | Proposed-EventDriven | mild | Per-node counts start to identify hot spots |
-| RW-E3-heavy | Proposed-EventDriven | heavy | E3's advantage over E2 should be largest here |
+| Method | Paradigm | K (fallbacks) | w | Sync |
+|---|---|---|---|---|
+| E2 | event-driven | 1 (0) | 0 | 0.1 s |
+| E3 | event-driven | 3 (2) | 0.5 | 0.1 s |
+| P1 | periodic | 1 (0) | 0 | globSync, 1.0 s, one partition |
+| P4 | periodic | 3 (2) | 0.5 | globSync, 1.0 s, one partition |
 
-The expected shape of the result is that E3's advantage over E2 rises
-monotonically with stress intensity, and that the placement-quality Gini
-coefficient shows E3 shifting workload pods toward less-stressed nodes while E2
-stays uniform and ignores the real contention.
+The stress profiles pin stress pods to the workers by `nodeName`, bypassing the
+schedulers, so that the workers' free CPU differs and placement matters: `none`
+places none, `mild` 0, 1 and 2 stress pods on the three workers, and `heavy` 0,
+2 and 4.
 
 ### 9.3 Procedure
 
@@ -697,26 +631,32 @@ that registry pull latency and rate limits do not pollute the measurement.
 # Covers polinux/stress-ng, nginx:1.27-alpine, redis:7-alpine, mysql:8.0
 ```
 
-Each `<strategy>-<profile>` round:
+`run-supplementary.sh` runs the matrix: it first deletes any KWOK nodes, whose
+presence in the schedulers' caches would add their Filter and Score work to
+every workload pod, and then runs the profiles in turn (none, mild, heavy), each
+with the four methods, through `run-workload-bench.sh`. Every trial is a full
+cycle, so each gives an independent placement sample:
 
-1. Clean up leftover workload namespaces on the workers.
-2. Configure the scheduler (E2/E3 map to CANDIDATE_K / PENALTY).
+1. Clean up the workload namespace on the workers.
+2. Configure the schedulers for the method.
 3. Deploy the stress pods for the profile, bound directly by `nodeName`.
-4. Wait 15 s for stress to reach steady-state CPU load.
-5. Deploy the nginx / redis / mysql Deployments, scheduled by para-scheduler.
-6. Compute `placement-quality.json` once, as the placement-layer snapshot.
-7. Run 5 trials: three benchmarks concurrently for 180 s, collecting wrk /
+4. Deploy the nginx / redis / mysql Deployments, scheduled by para-scheduler.
+5. Record `placement-quality.json`, the placement-layer snapshot.
+6. Run the three benchmarks concurrently for 180 s, collecting wrk /
    redis-benchmark / sysbench output plus Prometheus node resource series.
-8. Delete the namespace.
+7. Cool down before the next trial.
+
+The results are not archived; the numbers the paper quotes come from the
+recorded runs.
 
 ### 9.4 Validity boundaries
 
-- Only three physical workers, far smaller than the KWOK experiments. This board
-  validates the mapping from scheduling quality to application performance; it
-  does not carry the large-scale evaluation narrative.
+- Only three physical workers, far smaller than the KWOK experiments. The
+  placement space is too small to separate the scheduler's effect from placement
+  chance; this board checks the mapping from scheduling quality to application
+  performance, and does not carry the large-scale evaluation narrative.
 - Stress pods are bound by `nodeName` and bypass para-scheduler, so this board
-  does not test multicandidate under high-conflict load (B2/B3 do). It isolates
-  the penalty mechanism's effect on workload placement.
+  does not test multicandidate under high-conflict load (B2/B3 do).
 - The `heavy` profile locks 8 CPU per node (4 stress pods x 2 CPU) and needs
   workers with at least 16 allocatable CPU. A smaller testbed must scale the
   stress pods' CPU requests or the workload replica counts proportionally.
@@ -816,18 +756,18 @@ a matrix round is accepted.
 
 The load is identical to B2 at 10,000 nodes: 10,000 KWOK nodes, HC-V at V=0.6
 (24 CPU / 192 Gi requests, 1 pod/node), 10 schedulers, 500 deployments/s burst,
-fixed random seed. The `Z0` result should agree with the existing B2-10000n data
-within 10% on throughput, which serves as an environment-drift check.
+fixed random seed. The `Z0` result should agree with the B2-10000n data within
+10% on throughput, which serves as an environment-drift check.
 
 Method configurations match the Board B production configuration item by item
 and must not be chosen independently:
 
-| Method | Paper name | Paradigm | partitions | sync_pattern | sync_period | K | w |
+| Method | Paper name | Paradigm | partitions | sync_pattern | sync_period | K (fallbacks) | w |
 |---|---|---|---:|---|---:|---:|---:|
-| E2 | vanilla-E | event-driven | 1 | `diff` | 0.1 s | 0 | 0 |
-| E3 | ParKour-E | event-driven | 1 | `diff` | 0.1 s | **2** | **0.5** |
-| P1 | vanilla-P | periodic globSync | 1 | `glob` | 1.0 s | 0 | 0 |
-| P4 | ParKour-P | periodic globSync | 1 | `glob` | 1.0 s | **2** | **0.5** |
+| E2 | vanilla-E | event-driven | 1 | `diff` | 0.1 s | 1 (0) | 0 |
+| E3 | ParKour-E | event-driven | 1 | `diff` | 0.1 s | **3 (2)** | **0.5** |
+| P1 | vanilla-P | periodic globSync | 1 | `glob` | 1.0 s | 1 (0) | 0 |
+| P4 | ParKour-P | periodic globSync | 1 | `glob` | 1.0 s | **3 (2)** | **0.5** |
 
 Three constraints:
 
@@ -835,22 +775,23 @@ Three constraints:
   the better synchronization mode; the partition rotation of sameSync/diffSync
   raises average staleness. Board F's independent variable is data-plane latency,
   and globSync keeps partition-sync cost out of it.
-- **`K=2` and `w=0.5` are Board A's values, used in the paper.** Board F must
-  reuse them, or the paper would present two different values of K.
+- **K=3 and w=0.5 are the published configuration.** Board F must reuse them, or
+  the paper would present two different values of K.
 - **Event-driven and periodic partition settings are configured
   independently.** Both happen to be partitions=1, but from different sources,
   and the scripts must not share one variable for them.
 
 Matrix: 3 data-plane scenarios x 2 paradigms x 2 methods, with the repetition
-count differing by paradigm.
+count differing by paradigm. Every sub-experiment runs through
+`run-module-f.sh --experiment <name>`, dry-run unless given `--execute`.
 
-| Sub-experiment | Paradigm | Methods | Profiles | Trials | Rounds | Entry point |
-|---|---|---|---|---:|---:|---|
-| F1-E | event-driven | E2, E3 | `Z0`, `Dreal` | 3 | 12 | `run-module-f.sh --experiment F1-E` |
-| F1-P | periodic globSync | P1, P4 | `Z0`, `Dreal` | **5** | 20 | `run-module-f1-p.sh` |
-| F2-E | event-driven | E2, E3 | `Dreal-F1` | 3 | 6 | `run-module-f2-e.sh` |
-| F2-P | periodic globSync | P1, P4 | `Dreal-F1` | **5** | 10 | `run-module-f2-p.sh` |
-| **Total** | | | | | **48** | |
+| Sub-experiment | Paradigm | Methods | Profiles | Trials | Rounds |
+|---|---|---|---|---:|---:|
+| F1-E | event-driven | E2, E3 | `Z0`, `Dreal` | 3 | 12 |
+| F1-P | periodic globSync | P1, P4 | `Z0`, `Dreal` | **5** | 20 |
+| F2-E | event-driven | E2, E3 | `Dreal-F1` | 3 | 6 |
+| F2-P | periodic globSync | P1, P4 | `Dreal-F1` | **5** | 10 |
+| **Total** | | | | | **48** |
 
 **Why the repetition counts differ.** Between-trial variance is small on the
 event-driven side, and its `Z0` result agrees with Board B's independent
@@ -880,7 +821,7 @@ but is outside the matrix.
 | | `ACF` | `N_acf / (N_target + N_acf)`, the pod-level reschedule rate; **the only formal conflict metric** |
 | Control plane (diagnostic) | `R_conflict` (BCR in the paper) | `N_conflict / (N_target + N_conflict)`, candidate-level; the numerator grows with K, so it is not comparable across K or across implementations |
 | | `T_sched_p50/p99`, `rank_hit` | Same definitions as Board B |
-| | `partition_staleness` | Age of the partition snapshot at installation; diagnostic here, compared properly in Board H |
+| | `partition_staleness` | Age of the partition snapshot at installation; diagnostic only |
 | Data plane (secondary) | P50/P90/P99 of `T_data`, `T_user` | Successful pods |
 | | `T_ready_total`, `Q_ready` | From `min(t_create)` to `N_target` concurrently Ready replicas |
 | F2 only | `F_observed`, `N_failed`, `A_rebuild` | `A_rebuild` = distinct pods that ever bound successfully / `N_target`; theoretical reference `1/(1-f)`. Sanity check only |
@@ -903,6 +844,12 @@ Metric tiers:
 
 `Q_bind` is taken from the CL2 saturation window (`N_target / T_window`) by
 default, with documented fallbacks when that window is contaminated.
+
+The figure reads both primary metrics at the T99 completion cut: `Q_bind` as
+`9900 / T99` from the completion curve, and `ACF` from the binder's counters at
+1 s resolution. The round summaries hold only the whole-round ACF, so
+`pull-windowed-acf.py` rebuilds the T99 value right after the campaign, while
+Prometheus still holds those counters.
 
 A round that times out is no longer discarded outright: if `scheduled >=
 --min-complete-pods` (default 9900 = T99), the round counts as valid, is marked
@@ -940,44 +887,36 @@ therefore used as workload-profile evidence, not as an experimental variable.
 
 ### 11.2 Data and definitions
 
-Data: Alibaba Cluster Trace v2018 — `batch_task` (about 124 MiB, 14,295,731
-tasks over roughly 4,034 machines and more than 8 days), plus `machine_meta` and
-`container_meta`. A `batch_task` row is a task group, so pod-equivalent arrivals
-expand by instance: `pod_arrivals(t) = sum(instance_num(task))` at
-`task.start_time = t`.
+Data: `batch_task.csv` from Alibaba Cluster Trace v2018 (765 MiB, 14,295,731
+task rows over about 8.8 days). A `batch_task` row is a task group, so
+pod-equivalent arrivals expand by instance: `pod_arrivals(t) =
+sum(instance_num(task))` at `task.start_time = t`. Rows whose fields do not
+parse, or which fall outside the trace's own reporting window, are skipped
+(24,089 of them).
 
-Filtering and conversion: drop records with `start_time <= 0`,
-`instance_num <= 0`, or invalid requests; `plan_cpu=100` counts as 1 CPU;
-`plan_mem` is normalized against a 100-unit node capacity; a task's terminal
-state is not used for filtering, since Failed, Running and Terminated tasks all
-entered the system. Arrival times are floored to the second and binned into 60 s
-windows (1 / 10 / 300 s also reported); the active region is the set of windows
-with arrivals.
+Arrivals are binned to the second and aggregated into windows of 1, 10, 60 and
+300 s. The **active period** trims the trace's quiet head and tail: leading and
+trailing stretches of 60 s windows below 10% of the trace's mean rate that last
+at least an hour. Idle seconds inside the active period stay in every statistic.
+The reference rate is 200 pods/s, roughly the single-scheduler throughput the
+Godel paper reports.
 
 ### 11.3 Results
 
-Arrival intensity over the active region: the median 60 s window is about 1,800
-pods/s, and the distribution over 60 s windows is roughly P50/P90/P95/P99 =
-1,524 / 3,739 / 4,763 / 9,641 pods/s.
+`trace/alibaba2018/export.py` computes, from the raw CSV:
 
-| Threshold | Share of active 60 s windows below it |
+| Quantity | Value |
 |---|---:|
-| < 100 pods/s | 1.5% |
-| < 250 pods/s | **1.8%** |
-| < 500 pods/s | 4.3% |
-| < 1000 pods/s | 17.9% |
+| Active period | 171.6 h of the trace's 211.8 h |
+| Mean arrival rate over the active period | 2,271 pods/s |
+| 1 s windows above 200 pods/s | 66.1% |
+| 60 s windows above 200 pods/s | 97.9% |
+| 60 s window rate P50 / P90 / P99 | 1,824 / 4,047 / 10,474 pods/s |
+| Representative 60 s window (seconds 627,120-627,179), mean rate | 1,514 pods/s |
 
-**Conclusion 1.** While there is load, more than 98% of the time the arrival rate
-exceeds a single scheduler's ceiling of roughly 250 pods/s. Board B's saturation
-burst therefore targets a common production operating point, not an inflated
-extreme.
-
-Request profile, taken from a representative median minute window: pods are far
-smaller than nodes (CPU request P50/P95/P99 = 1 / 1 / 1 core, maximum 10;
-normalized memory P50/P95/P99 = 0.30 / 0.59 / 0.79; `instance_num` P50/P90/P99 =
-1 / 79 / 1,241). Physical machines are largely homogeneous (about 96 CPU and 100
-memory units); the heterogeneity comes from co-located online containers
-reducing effective available capacity.
+**Conclusion 1.** While there is load, nearly every minute's arrival rate exceeds
+a single scheduler's throughput. Board B's saturation burst therefore targets a
+common production operating point, not an inflated extreme.
 
 **Conclusion 2.** Production pods are much smaller than nodes, so a real node
 holds many pods — the simulator's large M and the cluster's low-contention B1.
@@ -988,9 +927,10 @@ are stated as a limitation.
 
 ### 11.4 Artifacts
 
-`experiments/trace/alibaba2018/plot_arrival_figure.py` generates the arrival-rate
-figure directly from the raw CSV with no cluster dependency. The script's
-docstring gives the download URL for the trace, which is not redistributed here.
+`experiments/trace/alibaba2018/export.py` reduces the trace for the arrival-rate
+figure directly from the raw CSV with no cluster dependency, and prints the
+statistics above. The script's docstring gives the download URL for the trace,
+which is not redistributed here; the registry pins its SHA-256.
 
 ### 11.5 Validity boundaries
 
@@ -998,251 +938,72 @@ docstring gives the download URL for the trace, which is not redistributed here.
   submission time; the `instance_num` expansion assumes a task's instances become
   schedulable simultaneously.
 - The absolute peak windows are dominated by a few very large tasks, so the
-  profile uses a representative percentile window rather than describing the peak
-  as typical.
-- Effective-capacity heterogeneity comes from co-located background load, not
-  from hardware models; CPU requests are over-subscribed in production and
-  cannot be mapped to allocatable without processing.
+  profile uses a representative window rather than describing the peak as
+  typical.
 - This board produces no throughput or conflict-rate result, so "no regression
   under real mixed requests" remains unverified.
 
 ---
 
-## 12. Board H: Synchronization-Channel Freshness
+## 12. Parameter Matrix
 
-### 12.1 Position
+[matrix.md](matrix.md) lists every published cell with its parameters, its trial
+count and the figures it feeds; this section states what those cells share and
+what the runner can vary beyond them.
 
-This board does one thing: **measure the delivery-freshness difference between
-the two state synchronization channels**. It produces no method comparison and
-does not involve the data plane.
-
-The motivation comes from the cross-paradigm ablation in Board C: enabling the
-penalty alone reduces ACF only slightly under event-driven synchronization
-(`G=0.1 s`, near-real-time state) but substantially under periodic globSync
-(`G=1.0 s`, stale state). Same code, same `w=0.5`; the only difference is
-whether the state is fresh. This suggests the penalty works because **at the same
-nominal period, a lightweight payload arrives on time and a full snapshot does
-not** — the conflict-rate feedback acts as a fresher proxy for node state.
-
-Existing data supports only half of that claim. `partition_staleness` shows the
-age a full snapshot already carries at installation, and in Board F's periodic
-rounds a majority land in buckets beyond even the most permissive on-time bound
-(heartbeat period plus the measured `sync_duration_p99`). But **the conflict-rate
-feed has never itself been measured**; the first half of the claim rests on
-payload size alone. Board H closes that gap.
-
-### 12.2 The two channels
-
-| Channel | Payload | Publication cadence | Consumption |
-|---|---|---|---|
-| Full partition snapshot | Complete state of 10,000 nodes, split by partition | `snapshot-flush-interval` 100 ms on change / 1 s heartbeat | Schedulers pull and apply on `G / M` |
-| Conflict-rate feed | `[attempts, conflicts]` counters for contended nodes only | `stats-flush-period` **1 s** | Schedulers watch the AdoptionStats CRD and install a whole-table replacement |
-
-Both have a nominal 1 s cadence, **so any lead cannot come from a higher
-publication frequency**. If a gap exists, it can only come from the difference in
-deliverable payload volume. That is what this board tests.
-
-### 12.3 Metric definitions and bucket requirement
-
-| Metric | Observation point | Meaning |
-|---|---|---|
-| `scheduler_parasched_partition_staleness_seconds` | The instant the scheduler **applies a partition snapshot** | `now - snapshot.Timestamp` |
-| `scheduler_parasched_penalty_signal_age_seconds` | The instant the scheduler **installs the conflict-rate table** | `now - AdoptionStats.status.lastUpdateTime` |
-
-The two metrics **must share one set of histogram buckets**, or their
-distributions cannot be compared bucket by bucket. This is enforced by a single
-`stalenessBuckets` variable in `metrics/parasched.go` rather than by convention.
-
-The buckets are `ExponentialBuckets(0.01, 1.5, 20)` rather than the earlier
-`ExponentialBuckets(0.01, 2, 12)`. The old scheme had only three boundaries
-between 0.5 and 3 s, which is exactly the interval that decides "did this exceed
-one synchronization period", leaving several Board F rounds undecidable. The new
-scheme has five.
-
-`histogram_quantile` interpolates linearly within exponential buckets, so **the
-interpolated values must not be quoted as formal numbers**; only bucket
-membership is robust, since it depends on cumulative counts alone. Every
-judgement is made by bucket membership.
-
-Both observation points are taken at the moment of installation, so the
-comparison is like for like.
-
-### 12.4 Configuration
-
-The metrics only produce samples when the penalty is enabled (`w > 0`), so the
-ParKour-P configuration is required. The environment reuses B2 at 10,000 nodes,
-matching Boards B, C and F.
-
-| Item | Value |
-|---|---|
-| Sub-experiment | H1 |
-| Paradigm | periodic globSync, `G=1.0 s`, partitions=1 |
-| Method | ParKour-P (`K=2`, `w=0.5`) |
-| Data-plane profile | `Z0` (no injection; the data plane is not this board's variable) |
-| Scale | 10,000 nodes, HC-V `V=0.6`, 10 schedulers, 500 deployments/s burst |
-| Trials | **3**, about 30 minutes |
-
-`Z0` means the KWOK processes load only `kwok-config.yaml` and use its compiled
-built-in default Stage; there is no cluster Stage object to back up or replace.
-The preflight therefore checks process arguments: all 10 shards must have exactly
-one `--config`, none containing `pod-ready-dreal`. **Do not use
-`kubectl get stages`** — that resource type does not exist in this cluster, and a
-failed query would be silently swallowed and misread as a pass.
-
-The entry point is `experiments/scripts/run-board-h.sh`, with the parameters
-above hard-coded and dry-run by default:
-
-```bash
-bash experiments/scripts/run-board-h.sh              # preview the configuration and command
-bash experiments/scripts/run-board-h.sh --execute    # run the 3 rounds
-```
-
-Under `--execute` it first runs three preflight checks and exits on the first
-failure:
-
-1. **No leftover Board F Stage, and the default `pod-ready` Stage in place.**
-   This check is not optional: `run-experiment.sh` predates Board F and performs
-   no Stage injection at all — it uses whatever Stage the cluster currently
-   carries. If a Board F run aborted before its restore logic completed, H1 would
-   run all 3 rounds with latency injection still active and look entirely normal.
-2. **The schedulers run the instrumented image**, identified by the
-   `partition_staleness` bucket count (13 `le` values in the old implementation,
-   21 in the new) and by `penalty_signal_age` being exported.
-3. All para-system components ready.
-
-After the run the script calls `process-results.py` itself, verifies that the
-freshness fields actually landed, and prints a p50/p99 comparison of the two
-channels.
-
-### 12.5 Decision rule
-
-Let `S` be `partition_staleness` and `A` be `penalty_signal_age`, from the same
-round and the same definition:
-
-| Result | Verdict |
-|---|---|
-| The upper bound of `A`'s p99 bucket <= the lower bound of `S`'s p99 bucket | **Supported**: the lightweight signal does arrive first, by more than the bucket resolution |
-| Both p99 values land in the same bucket | **Not supported**: no gap is visible at this resolution; either reword the claim or re-measure at higher resolution |
-| The lower bound of `A`'s p99 bucket >= the upper bound of `S`'s p99 bucket | **Refuted**: the lightweight signal is staler, and the penalty's effect needs another explanation |
-
-p50 is reported too, but used for calibration rather than evidence: it mostly
-reflects the refresh cadence rather than lateness.
-
-### 12.6 Isolation requirements
-
-This board uses an **instrumented image** (the new metrics sit outside the
-scoring path, but the binary differs), so:
-
-1. It must run only **after** the formal matrices of the boards it depends on
-   have completed. The image must not change mid-matrix, or the git commit
-   recorded in a matrix's metadata would be inconsistent.
-2. The image must use a **traceable dedicated tag** (for example
-   `staleness-probe-<date>`), never `latest`.
-3. H1's `Q_bind` and `ACF` are **sanity checks only** — they should be the same
-   order of magnitude as Board F's ParKour-P `Z0` — and must never be merged into
-   another board's statistics or used for method comparison.
-
-### 12.7 Collection-side wiring
-
-A new metric needs three changes in step, and missing any one leaves `null` in
-`round-summary.json`:
-
-1. `collect-metrics.sh`: add the `penalty_signal_age_p50/p99` PromQL queries.
-2. `process-results.py`: read those JSON files and write the
-   `penalty_signal_age_p50_ms` / `penalty_signal_age_p99_ms` fields.
-3. `process-results.py`: append the same fields to the CSV column list.
-
-This is not hypothetical: an earlier `penalty_lookup_p50_ms` field was `null` in
-every periodic round precisely because the metric was instrumented but never
-queried.
-
-### 12.8 Validity boundaries
-
-- Both metrics observe the age **at installation** and exclude further ageing
-  between installation and use. They measure delivery timeliness, not the actual
-  staleness at decision time, which is strictly worse.
-- The two channels have different refresh semantics (snapshots are pulled per
-  partition, conflict rates are pushed by CRD watch), so the absolute difference
-  cannot be attributed entirely to payload volume.
-- This board can only show **whether a freshness gap exists**, not that the
-  penalty's benefit comes from that gap. Establishing causality would require
-  manipulating the mediating variable (artificially delaying the signal,
-  permuting the node-to-conflict-rate mapping), which is a separate experiment.
-- Three rounds establish an order-of-magnitude difference only. If the two
-  distributions' bucket memberships turn out close, the round count or the bucket
-  resolution must be increased and the board re-run.
-
----
-
-## 13. Parameter Matrix
-
-### 13.1 Fixed parameters
+### 12.1 Fixed parameters
 
 | Parameter | Value |
 |---|---|
-| KWOK node spec | 32 CPU / 256 Gi (HC-V uses the capacity tiers of section 6.2) |
-| Repetitions | 3 (Board F: at least 3, 5 where budget allows) |
+| KWOK node capacity | Ten shards at the V=0.6 tiers of `generate-hetero-config.py`: 44, 40, 36, 32, 32, 30, 28, 28, 26 and 24 CPU, 8 GiB per CPU, 110 pods |
+| Strategy | `QualityFirst`, seed 42 |
+| Repetitions | 5 trials on boards B and C and for Godel; 3 on board A; board F 3 event-driven and 5 periodic rounds per cell; board E 3 |
 
-### 13.2 Load scenario parameters
+### 12.2 Load scenario parameters
 
 | Parameter | Low contention | High contention (HC-V) | Note |
 |---|---|---|---|
 | Pod CPU request | 1000m | 24000m | Ordinary vs. exclusive |
 | Pod memory request | 8Gi | 192Gi | Ordinary vs. exclusive |
 | PODS_PER_NODE (M) | 29 | **1** | Node capacity determines conflict probability |
-| Capacity variance (V) | 0 | **0.6** | Per-shard CPU in [24, 47], sum fixed at 320 |
+| Capacity variance (V) | 0.6 | **0.6** | Per-shard CPU from 24 to 44, sum fixed at 320 |
 | CL2 config | cl2-schedule-pods.yaml | **cl2-saturation-only.yaml** | HC-V has no latency phase |
 | CL2 saturation creation rate | 5 deployments/s | **500 deployments/s (burst)** | Burst far above single-scheduler throughput |
 | CL2 latency creation rate | 50 deployments/s | — | HC-V has no latency phase |
 
 > **Node capacity arithmetic.**
-> Low contention (V=0): a 32 CPU / 256 Gi node gives `floor(32/1)=32` and
-> `floor(256/8)=32`, capped at 29 pods to leave 3 CPU for the system.
-> HC-V at V=0.6: the 10 shards have CPU in [24, 47], each node takes
-> `floor(CPU/24)=1` pod, and the cluster's total pod capacity stays equal to N.
-> Run `generate-hetero-config.py --list` to see the generated tiers.
+> The ten shards' CPU always sums to 320, so the cluster's CPU is 32 per node on
+> average whatever V is, and memory follows at 8 GiB per CPU.
+> Low contention: 1-CPU / 8 GiB pods fit 32 per node on average; the workload
+> places 29 per node, so the cluster never fills.
+> HC-V: every shard has between 24 and 47 CPU, so each node takes exactly
+> `floor(CPU/24)=1` pod, and the cluster's pod capacity equals N.
+> Run `generate-hetero-config.py --list` to see the tiers at each V.
 
-### 13.3 Trace analysis parameters (Board G, offline)
+### 12.3 Trace analysis parameters (Board G, offline)
 
 | Parameter | Value |
 |---|---|
-| Tables | `batch_task`, `machine_meta`, `container_meta` (Alibaba Cluster Trace v2018) |
+| Table | `batch_task` (Alibaba Cluster Trace v2018) |
 | Pod-equivalent arrivals | `sum(instance_num)`, binned by `start_time` at second granularity |
-| Arrival-rate window | 60 s (1 / 10 / 300 s also reported) |
-| Thresholds | 100 / 250 / 500 / 1000 pods/s (250 is roughly the single-scheduler ceiling) |
+| Windows | 1, 10, 60 and 300 s; the figure draws 1 and 60 s |
+| Active period | Trim leading and trailing 60 s windows below 10% of the mean rate, in stretches of at least 1 h |
+| Reference rate | 200 pods/s, roughly the single-scheduler throughput |
 
-### 13.4 Adjustable defaults
+### 12.4 Runner parameters
 
-| Parameter | Default | Range | Note |
+| Parameter | Published values | Runner range | Note |
 |---|---|---|---|
-| N_nodes | 10,000 | 1,000 / 2,000 / 5,000 / 10,000 / 20,000 | |
-| N_schedulers | 5 | 1 / 2 / 4 / 6 / 8 / 10 | |
-| candidate_k (K) | Board A | 0 / 1 / 2 / 4 | E3/P4 use `K*`; baselines use 0 |
-| strategy | Board A | QualityFirst / LatencyFirst / WeightedRandom | Event-driven: QF/WR only |
-| penalty_weight (p) | Board A | 0.0 / 0.1 / 0.3 / 0.5 / 0.7 | QualityFirst and WeightedRandom only; baselines use 0 |
+| N_nodes | 1,000-20,000 | any | 10,000 unless a board varies it |
+| N_schedulers | 10; 2-10 on B3; 5 on board E | 1 and up | |
+| K (`num_backup` + 1) | 3; 1, 2, 3, 5 on the K sweep | 1 and up | Baselines use 1 |
+| strategy | QualityFirst | QualityFirst / LatencyFirst / WeightedRandom / ParSync variants | |
+| penalty weight w | 0.5; 0.3 on the K sweep; 0-0.7 on the w sweep | [0, 1] | Baselines use 0 |
 | strategy_seed | 42 | any int64 | WeightedRandom only |
-| num_partitions (M) | 5 | 1 / 5 / 10 / 20 | |
-| sync_period (G) | 1.0 s | 0.5 / 1.0 / 2.5 / 5.0 s | |
-| dataplane_profile | Z0 | Z0 / Dreal / Dtail / Dreal-F1 | Board F only |
-| dataplane_failure_rate | 0 | 0 / 0.01 | 1% is a sensitivity setting |
+| partitions (M) | 1 (event-driven, globSync); 10 (sameSync, diffSync) | 1 and up | globSync always runs one |
+| sync period (G) | 0.1 s event-driven; 1.0 s periodic | seconds | Below 0.5 s means event-driven |
+| dataplane_profile | Z0, Dreal, Dreal-F1 | Z0 / Dreal / Dtail / Dreal-F1 | Board F only |
+| dataplane_failure_rate | 0, 0.01 | [0, 1) | 1% is a sensitivity setting |
 
-> K, strategy and p default to Board A's conclusions. Downstream groups that use
-> them (E3 / P4 / Ab-E{1,2,3} / Ab-P{1,2,3}) do not start until Board A has
-> produced `board-A-optima.yaml`.
-
-### 13.5 Round-count estimate
-
-| Board | Arithmetic | Rounds |
-|---|---|---|
-| A, event-driven sensitivity (S-E) | (4+2+5+1) x 3 | 36 |
-| A, periodic sensitivity (S-P) | (4+3+5+1) x 3 | 39 |
-| B1, low-contention scale-out | 3 scales x 3 groups x 3 | 27 |
-| B2, high-contention scale-out | 4 scales x (3 E + 4 P) x 3 | 84 |
-| B3, high-contention scheduler scale-out | 5 counts x (2 E + 2 P) x 3 | 60 |
-| C, event-driven ablation | 4 combinations x 3 | 12 |
-| C, periodic ablation | 4 combinations x 3 | 12 |
-| D1-D3 | Reuses Board B/C data | 0 |
-| E, real workload | 2 strategies x 3 profiles x 5 | 30 |
-| F1, data-plane latency | 12 (event) + 20 (periodic) | 32 |
-| F2, plus 1% startup failure | 6 (event) + 10 (periodic) | 16 |
-| H1, synchronization freshness | 1 configuration x 3 | 3 |
+The run counts per board are in the Boards table of [matrix.md](matrix.md);
+board E adds 36 trials.

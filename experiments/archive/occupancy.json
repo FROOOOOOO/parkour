@@ -1,0 +1,446 @@
+{
+  "kind": "occupancy",
+  "metadata": {
+    "acf_allocation": "The 1-minute ACF event-rate series is integrated per interval and scaled to the exact per-trial ACF counter delta.",
+    "intervals": [
+      "0-80%",
+      "80-90%",
+      "90-100%"
+    ],
+    "occupancy_definition": "Unique bound pods divided by the configured workload capacity (num_nodes * pods_per_node).",
+    "scheduled_definition": "Unique bound pods plus all-candidate failures, because each ACF causes one additional scheduling attempt.",
+    "scope": "b2",
+    "trial_selection": "All five raw trials per configuration; no outlier filtering."
+  },
+  "scenarios": {
+    "b2-20k-event-driven": {
+      "configs": {
+        "ParKour (event-driven)": {
+          "cell": "B2-20000n-E3",
+          "trials": [
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.0007421940824429094,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 164.19292419228472
+                },
+                {
+                  "acf_rate_estimate": 0.0037944286978170063,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 120.48002496059478
+                },
+                {
+                  "acf_rate_estimate": 0.042374136258116216,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 59.35573229988823
+                }
+              ],
+              "trial": 1
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.004833762550858885,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 163.6997034392219
+                },
+                {
+                  "acf_rate_estimate": 0.0024718763914041214,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 120.93895225613372
+                },
+                {
+                  "acf_rate_estimate": 0.030692227116200236,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 66.53001877330266
+                }
+              ],
+              "trial": 2
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.0013302560116887998,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 164.035863065569
+                },
+                {
+                  "acf_rate_estimate": 0.002568468531249182,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 121.1769724391483
+                },
+                {
+                  "acf_rate_estimate": 0.0487684015999969,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 67.89239382293599
+                }
+              ],
+              "trial": 3
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.001419339810106409,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 168.70123014941967
+                },
+                {
+                  "acf_rate_estimate": 0.0019420593471730124,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 122.51751148281086
+                },
+                {
+                  "acf_rate_estimate": 0.04139570098258936,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 63.1324789547127
+                }
+              ],
+              "trial": 4
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.004538033480697464,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 163.3547061102819
+                },
+                {
+                  "acf_rate_estimate": 0.00121157389520817,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 119.4770900412965
+                },
+                {
+                  "acf_rate_estimate": 0.03690316215031682,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 64.14936830375746
+                }
+              ],
+              "trial": 5
+            }
+          ]
+        },
+        "Vanilla (event-driven)": {
+          "cell": "B2-20000n-E2",
+          "trials": [
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.012592928415619788,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 162.25442292166585
+                },
+                {
+                  "acf_rate_estimate": 0.04167503919575545,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 114.94467640143347
+                },
+                {
+                  "acf_rate_estimate": 0.24097770735600454,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 54.50215001180437
+                }
+              ],
+              "trial": 1
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.015104910450150397,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 167.1294340957104
+                },
+                {
+                  "acf_rate_estimate": 0.041248240817460965,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 117.66500647783914
+                },
+                {
+                  "acf_rate_estimate": 0.2149379092941088,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 56.54226039909728
+                }
+              ],
+              "trial": 2
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.010628458282243977,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 165.8896102804434
+                },
+                {
+                  "acf_rate_estimate": 0.03761847080477626,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 115.9396765965276
+                },
+                {
+                  "acf_rate_estimate": 0.2122696722369397,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 56.48267299406307
+                }
+              ],
+              "trial": 3
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.015916705726567722,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 163.59527927555692
+                },
+                {
+                  "acf_rate_estimate": 0.03715961528220452,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 117.59612036069056
+                },
+                {
+                  "acf_rate_estimate": 0.17322102410378376,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 58.77900238003371
+                }
+              ],
+              "trial": 4
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.013998267493639222,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 164.32120035341188
+                },
+                {
+                  "acf_rate_estimate": 0.03678538411459066,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 116.27157985767771
+                },
+                {
+                  "acf_rate_estimate": 0.18282879217255715,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 58.944613877627106
+                }
+              ],
+              "trial": 5
+            }
+          ]
+        }
+      }
+    },
+    "b2-20k-periodic": {
+      "configs": {
+        "ParKour (periodic)": {
+          "cell": "B2-20000n-P4",
+          "trials": [
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.011783305144911358,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 146.43730744073667
+                },
+                {
+                  "acf_rate_estimate": 0.1392712679106468,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 102.40755055670608
+                },
+                {
+                  "acf_rate_estimate": 0.780716340490705,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 22.69237878865094
+                }
+              ],
+              "trial": 1
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.01090062794820517,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 146.83107211623738
+                },
+                {
+                  "acf_rate_estimate": 0.15723761845843473,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 104.03152209408361
+                },
+                {
+                  "acf_rate_estimate": 0.7642487928106988,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 24.66866717370415
+                }
+              ],
+              "trial": 2
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.0082436118993679,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 147.8364309599241
+                },
+                {
+                  "acf_rate_estimate": 0.10250020151114313,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 101.56291552436342
+                },
+                {
+                  "acf_rate_estimate": 0.7843338630198128,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 21.640039072762846
+                }
+              ],
+              "trial": 3
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.014332335588818338,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 146.6632172071285
+                },
+                {
+                  "acf_rate_estimate": 0.15887843038120575,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 104.77951699419197
+                },
+                {
+                  "acf_rate_estimate": 0.783046625917485,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 24.784409729469647
+                }
+              ],
+              "trial": 4
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.014155476747730367,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 151.47038032793358
+                },
+                {
+                  "acf_rate_estimate": 0.16392236563766313,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 113.60071578972742
+                },
+                {
+                  "acf_rate_estimate": 0.7336933068944452,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 32.153924106216934
+                }
+              ],
+              "trial": 5
+            }
+          ]
+        },
+        "Vanilla (periodic)": {
+          "cell": "B2-20000n-P1",
+          "trials": [
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.16906930596937264,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 113.00933750447402
+                },
+                {
+                  "acf_rate_estimate": 0.6063024294202354,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 49.93857934455865
+                },
+                {
+                  "acf_rate_estimate": 0.9399911936207771,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 4.377645054314632
+                }
+              ],
+              "trial": 1
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.14197270415283944,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 120.10605986671652
+                },
+                {
+                  "acf_rate_estimate": 0.537521679754099,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 63.84652517410541
+                },
+                {
+                  "acf_rate_estimate": 0.9540747705762433,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 3.0880895519700386
+                }
+              ],
+              "trial": 2
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.12690033994705474,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 119.72069685860865
+                },
+                {
+                  "acf_rate_estimate": 0.5618356078053593,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 56.975748931262544
+                },
+                {
+                  "acf_rate_estimate": 0.9466253748789524,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 4.4038067036656035
+                }
+              ],
+              "trial": 3
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.13887841642903165,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 122.23313084206983
+                },
+                {
+                  "acf_rate_estimate": 0.5233479760356939,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 65.76244836702972
+                },
+                {
+                  "acf_rate_estimate": 0.9493397034663654,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 4.361855084434797
+                }
+              ],
+              "trial": 4
+            },
+            {
+              "intervals": [
+                {
+                  "acf_rate_estimate": 0.1484628057264987,
+                  "interval": "0-80%",
+                  "mean_useful_placement_throughput": 119.18945352374656
+                },
+                {
+                  "acf_rate_estimate": 0.5759743863556164,
+                  "interval": "80-90%",
+                  "mean_useful_placement_throughput": 52.22846596737728
+                },
+                {
+                  "acf_rate_estimate": 0.9525354997434728,
+                  "interval": "90-100%",
+                  "mean_useful_placement_throughput": 2.768154139999713
+                }
+              ],
+              "trial": 5
+            }
+          ]
+        }
+      }
+    }
+  },
+  "schema": "parkour-archive/v1"
+}

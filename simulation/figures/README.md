@@ -34,6 +34,11 @@ package.
 | `fig7_penalty` | `penalty-study.pdf` | Penalty-only effect and fallback-list synergy; event publishes every cycle, periodic cases every 1 s |
 | `fig8_penalty_scope` | `penalty-scope.pdf` | Shared versus per-scheduler penalty observation scope |
 
+Each `plot.py` owns one output. `penalty-scope.pdf` is the one output that does
+not appear in the paper: the paper shows that comparison as the third panel of
+`penalty-study.pdf`. The panel is drawn by `fig8_penalty_scope/panels.py`, which
+both figures import, so neither `plot.py` reaches into the other.
+
 ## Workflow
 
 Run commands from `simulation/`:

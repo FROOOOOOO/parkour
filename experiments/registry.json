@@ -1,0 +1,3165 @@
+{
+  "boards": {
+    "B1": {
+      "design_board": "B1",
+      "directory": "B1",
+      "unit": "run"
+    },
+    "B2": {
+      "design_board": "B2",
+      "directory": "B2",
+      "unit": "run"
+    },
+    "B3": {
+      "design_board": "B3",
+      "directory": "B3",
+      "unit": "run"
+    },
+    "F": {
+      "design_board": "F",
+      "directory": null,
+      "unit": "round"
+    },
+    "K": {
+      "design_board": "A",
+      "directory": "K",
+      "unit": "run"
+    },
+    "P": {
+      "design_board": "A",
+      "directory": "P",
+      "unit": "run"
+    },
+    "ablation": {
+      "design_board": "C",
+      "directory": "ablation",
+      "unit": "run"
+    },
+    "godel": {
+      "design_board": "baseline",
+      "directory": "godel-new",
+      "unit": "run"
+    }
+  },
+  "cells": [
+    {
+      "arm": "single",
+      "board": "B1",
+      "cell": "B1-1000n-E1",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 1000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": 29,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B1",
+      "cell": "B1-1000n-E2",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 1000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 29,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B1",
+      "cell": "B1-1000n-E3",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 2,
+        "num_nodes": 1000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 29,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "single",
+      "board": "B1",
+      "cell": "B1-2000n-E1",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": 29,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B1",
+      "cell": "B1-2000n-E2",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 29,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B1",
+      "cell": "B1-2000n-E3",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 2,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 29,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "single",
+      "board": "B1",
+      "cell": "B1-5000n-E1",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": 29,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B1",
+      "cell": "B1-5000n-E2",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 0,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 29,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B1",
+      "cell": "B1-5000n-E3",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_backup": 2,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 29,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "single",
+      "board": "B2",
+      "cell": "B2-10000n-E1",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B2",
+      "cell": "B2-10000n-E2",
+      "figures": [
+        "overhead",
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B2",
+      "cell": "B2-10000n-E3",
+      "figures": [
+        "overhead",
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-glob",
+      "board": "B2",
+      "cell": "B2-10000n-P1",
+      "figures": [
+        "overhead",
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-same",
+      "board": "B2",
+      "cell": "B2-10000n-P2",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-diff",
+      "board": "B2",
+      "cell": "B2-10000n-P3",
+      "figures": [
+        "overhead",
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour-glob",
+      "board": "B2",
+      "cell": "B2-10000n-P4",
+      "figures": [
+        "overhead",
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "single",
+      "board": "B2",
+      "cell": "B2-20000n-E1",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 20000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B2",
+      "cell": "B2-20000n-E2",
+      "figures": [
+        "occupancy-intervals-1col",
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 20000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B2",
+      "cell": "B2-20000n-E3",
+      "figures": [
+        "occupancy-intervals-1col",
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 20000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-glob",
+      "board": "B2",
+      "cell": "B2-20000n-P1",
+      "figures": [
+        "occupancy-intervals-1col",
+        "overhead",
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 20000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-same",
+      "board": "B2",
+      "cell": "B2-20000n-P2",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 20000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-diff",
+      "board": "B2",
+      "cell": "B2-20000n-P3",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 20000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour-glob",
+      "board": "B2",
+      "cell": "B2-20000n-P4",
+      "figures": [
+        "occupancy-intervals-1col",
+        "overhead",
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 20000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "single",
+      "board": "B2",
+      "cell": "B2-2000n-E1",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B2",
+      "cell": "B2-2000n-E2",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B2",
+      "cell": "B2-2000n-E3",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-glob",
+      "board": "B2",
+      "cell": "B2-2000n-P1",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-same",
+      "board": "B2",
+      "cell": "B2-2000n-P2",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 2000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-diff",
+      "board": "B2",
+      "cell": "B2-2000n-P3",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 2000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour-glob",
+      "board": "B2",
+      "cell": "B2-2000n-P4",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 2000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "single",
+      "board": "B2",
+      "cell": "B2-5000n-E1",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 1,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B2",
+      "cell": "B2-5000n-E2",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B2",
+      "cell": "B2-5000n-E3",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-glob",
+      "board": "B2",
+      "cell": "B2-5000n-P1",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-same",
+      "board": "B2",
+      "cell": "B2-5000n-P2",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 5000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-diff",
+      "board": "B2",
+      "cell": "B2-5000n-P3",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 5000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour-glob",
+      "board": "B2",
+      "cell": "B2-5000n-P4",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 5000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B3",
+      "cell": "B3-N10-E2",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B3",
+      "cell": "B3-N10-E3",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-glob",
+      "board": "B3",
+      "cell": "B3-N10-P1",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour-glob",
+      "board": "B3",
+      "cell": "B3-N10-P4",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B3",
+      "cell": "B3-N2-E2",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 2,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B3",
+      "cell": "B3-N2-E3",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 2,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-glob",
+      "board": "B3",
+      "cell": "B3-N2-P1",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 2,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour-glob",
+      "board": "B3",
+      "cell": "B3-N2-P4",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 2,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B3",
+      "cell": "B3-N4-E2",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 4,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B3",
+      "cell": "B3-N4-E3",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 4,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-glob",
+      "board": "B3",
+      "cell": "B3-N4-P1",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 4,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour-glob",
+      "board": "B3",
+      "cell": "B3-N4-P4",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 4,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B3",
+      "cell": "B3-N6-E2",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 6,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B3",
+      "cell": "B3-N6-E3",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 6,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-glob",
+      "board": "B3",
+      "cell": "B3-N6-P1",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 6,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour-glob",
+      "board": "B3",
+      "cell": "B3-N6-P4",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 6,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla-diff",
+      "board": "B3",
+      "cell": "B3-N8-E2",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 8,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-parkour-diff",
+      "board": "B3",
+      "cell": "B3-N8-E3",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 8,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla-glob",
+      "board": "B3",
+      "cell": "B3-N8-P1",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 8,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour-glob",
+      "board": "B3",
+      "cell": "B3-N8-P4",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 8,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla",
+      "board": "F",
+      "cell": "F1-E-E2-Dreal",
+      "experiment": "F1-E",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "E2",
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Dreal",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "profile": "Dreal",
+      "trials": 3
+    },
+    {
+      "arm": "event-vanilla",
+      "board": "F",
+      "cell": "F1-E-E2-Z0",
+      "experiment": "F1-E",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "E2",
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Z0",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "profile": "Z0",
+      "trials": 3
+    },
+    {
+      "arm": "event-parkour",
+      "board": "F",
+      "cell": "F1-E-E3-Dreal",
+      "experiment": "F1-E",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "E3",
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Dreal",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "profile": "Dreal",
+      "trials": 3
+    },
+    {
+      "arm": "event-parkour",
+      "board": "F",
+      "cell": "F1-E-E3-Z0",
+      "experiment": "F1-E",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "E3",
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Z0",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "profile": "Z0",
+      "trials": 3
+    },
+    {
+      "arm": "periodic-vanilla",
+      "board": "F",
+      "cell": "F1-P-P1-Dreal",
+      "experiment": "F1-P",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "P1",
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Dreal",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "profile": "Dreal",
+      "trials": 5
+    },
+    {
+      "arm": "periodic-vanilla",
+      "board": "F",
+      "cell": "F1-P-P1-Z0",
+      "experiment": "F1-P",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "P1",
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Z0",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "profile": "Z0",
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour",
+      "board": "F",
+      "cell": "F1-P-P4-Dreal",
+      "experiment": "F1-P",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "P4",
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Dreal",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "profile": "Dreal",
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour",
+      "board": "F",
+      "cell": "F1-P-P4-Z0",
+      "experiment": "F1-P",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "P4",
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Z0",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "profile": "Z0",
+      "trials": 5
+    },
+    {
+      "arm": "event-vanilla",
+      "board": "F",
+      "cell": "F2-E-E2-Dreal-F1",
+      "experiment": "F2-E",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "E2",
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Dreal-F1",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "profile": "Dreal-F1",
+      "trials": 3
+    },
+    {
+      "arm": "event-parkour",
+      "board": "F",
+      "cell": "F2-E-E3-Dreal-F1",
+      "experiment": "F2-E",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "E3",
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Dreal-F1",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "profile": "Dreal-F1",
+      "trials": 3
+    },
+    {
+      "arm": "periodic-vanilla",
+      "board": "F",
+      "cell": "F2-P-P1-Dreal-F1",
+      "experiment": "F2-P",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "P1",
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Dreal-F1",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "profile": "Dreal-F1",
+      "trials": 5
+    },
+    {
+      "arm": "periodic-parkour",
+      "board": "F",
+      "cell": "F2-P-P4-Dreal-F1",
+      "experiment": "F2-P",
+      "figures": [
+        "dataplane-sensitivity"
+      ],
+      "method": "P4",
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "dataplane_profile": "Dreal-F1",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "profile": "Dreal-F1",
+      "trials": 5
+    },
+    {
+      "arm": "event",
+      "board": "K",
+      "cell": "S-E-K0",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 3
+    },
+    {
+      "arm": "event",
+      "board": "K",
+      "cell": "S-E-K1",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 1,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 3
+    },
+    {
+      "arm": "event",
+      "board": "K",
+      "cell": "S-E-K2",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 3
+    },
+    {
+      "arm": "event",
+      "board": "K",
+      "cell": "S-E-K4",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-diff",
+      "board": "K",
+      "cell": "S-P-K0-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-glob",
+      "board": "K",
+      "cell": "S-P-K0-glob",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-same",
+      "board": "K",
+      "cell": "S-P-K0-same",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-diff",
+      "board": "K",
+      "cell": "S-P-K1-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 1,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-glob",
+      "board": "K",
+      "cell": "S-P-K1-glob",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 1,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-same",
+      "board": "K",
+      "cell": "S-P-K1-same",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 1,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-diff",
+      "board": "K",
+      "cell": "S-P-K2-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-glob",
+      "board": "K",
+      "cell": "S-P-K2-glob",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-same",
+      "board": "K",
+      "cell": "S-P-K2-same",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-diff",
+      "board": "K",
+      "cell": "S-P-K4-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-glob",
+      "board": "K",
+      "cell": "S-P-K4-glob",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-same",
+      "board": "K",
+      "cell": "S-P-K4-same",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "event",
+      "board": "P",
+      "cell": "S-E-P00-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 3
+    },
+    {
+      "arm": "event",
+      "board": "P",
+      "cell": "S-E-P01-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.1,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 3
+    },
+    {
+      "arm": "event",
+      "board": "P",
+      "cell": "S-E-P03-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 3
+    },
+    {
+      "arm": "event",
+      "board": "P",
+      "cell": "S-E-P05-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 3
+    },
+    {
+      "arm": "event",
+      "board": "P",
+      "cell": "S-E-P07-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.7,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-diff",
+      "board": "P",
+      "cell": "S-P-P00-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-glob",
+      "board": "P",
+      "cell": "S-P-P00-glob",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-same",
+      "board": "P",
+      "cell": "S-P-P00-same",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-diff",
+      "board": "P",
+      "cell": "S-P-P01-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.1,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-glob",
+      "board": "P",
+      "cell": "S-P-P01-glob",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.1,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-same",
+      "board": "P",
+      "cell": "S-P-P01-same",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.1,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-diff",
+      "board": "P",
+      "cell": "S-P-P03-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-glob",
+      "board": "P",
+      "cell": "S-P-P03-glob",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-same",
+      "board": "P",
+      "cell": "S-P-P03-same",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.3,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-diff",
+      "board": "P",
+      "cell": "S-P-P05-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-glob",
+      "board": "P",
+      "cell": "S-P-P05-glob",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-same",
+      "board": "P",
+      "cell": "S-P-P05-same",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-diff",
+      "board": "P",
+      "cell": "S-P-P07-diff",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.7,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-glob",
+      "board": "P",
+      "cell": "S-P-P07-glob",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.7,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "periodic-same",
+      "board": "P",
+      "cell": "S-P-P07-same",
+      "figures": [
+        "robustness"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.7,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 4,
+        "num_nodes": 10000,
+        "num_partitions": 10,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "same",
+        "sync_period": 1.0
+      },
+      "trials": 3
+    },
+    {
+      "arm": "vanilla",
+      "board": "ablation",
+      "cell": "AbE0-base",
+      "figures": [
+        "ablation-quality-a",
+        "ablation-quality-bc"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "multicandidate",
+      "board": "ablation",
+      "cell": "AbE1-M",
+      "figures": [
+        "ablation-quality-a",
+        "ablation-quality-bc"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "penalty",
+      "board": "ablation",
+      "cell": "AbE2-P",
+      "figures": [
+        "ablation-quality-a",
+        "ablation-quality-bc"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "parkour",
+      "board": "ablation",
+      "cell": "AbE3-MP",
+      "figures": [
+        "ablation-quality-a",
+        "ablation-quality-bc"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "diff",
+        "sync_period": 0.1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "vanilla",
+      "board": "ablation",
+      "cell": "AbP0-base",
+      "figures": [
+        "ablation-quality-a",
+        "ablation-quality-bc"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "multicandidate",
+      "board": "ablation",
+      "cell": "AbP1-M",
+      "figures": [
+        "ablation-quality-a",
+        "ablation-quality-bc"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.0,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "penalty",
+      "board": "ablation",
+      "cell": "AbP2-P",
+      "figures": [
+        "ablation-quality-a",
+        "ablation-quality-bc"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 0,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "parkour",
+      "board": "ablation",
+      "cell": "AbP3-MP",
+      "figures": [
+        "ablation-quality-a",
+        "ablation-quality-bc"
+      ],
+      "paradigm": "periodic",
+      "params": {
+        "capacity_variance": 0.6,
+        "conflict_penalty": 0.5,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_backup": 2,
+        "num_nodes": 10000,
+        "num_partitions": 1,
+        "num_schedulers": 10,
+        "pods_per_node": 1,
+        "strategy": "QualityFirst",
+        "strategy_seed": 42,
+        "sync_pattern": "glob",
+        "sync_period": 1.0
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B1-1000n-E2-godel",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_nodes": 1000,
+        "num_schedulers": 10,
+        "pods_per_node": 29
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B1-2000n-E2-godel",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_nodes": 2000,
+        "num_schedulers": 10,
+        "pods_per_node": 29
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B1-5000n-E2-godel",
+      "figures": [
+        "scalability-lowcontention"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "1000m",
+        "memory_request": "8Gi",
+        "num_nodes": 5000,
+        "num_schedulers": 10,
+        "pods_per_node": 29
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B2-10000n-E2-godel",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_nodes": 10000,
+        "num_schedulers": 10,
+        "pods_per_node": 1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B2-20000n-E2-godel",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_nodes": 20000,
+        "num_schedulers": 10,
+        "pods_per_node": 1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B2-2000n-E2-godel",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_nodes": 2000,
+        "num_schedulers": 10,
+        "pods_per_node": 1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B2-5000n-E2-godel",
+      "figures": [
+        "pareto-all-scales"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_nodes": 5000,
+        "num_schedulers": 10,
+        "pods_per_node": 1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B3-N10-E2-godel",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_nodes": 10000,
+        "num_schedulers": 10,
+        "pods_per_node": 1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B3-N2-E2-godel",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_nodes": 10000,
+        "num_schedulers": 2,
+        "pods_per_node": 1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B3-N4-E2-godel",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_nodes": 10000,
+        "num_schedulers": 4,
+        "pods_per_node": 1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B3-N6-E2-godel",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_nodes": 10000,
+        "num_schedulers": 6,
+        "pods_per_node": 1
+      },
+      "trials": 5
+    },
+    {
+      "arm": "godel",
+      "board": "godel",
+      "cell": "B3-N8-E2-godel",
+      "figures": [
+        "scalability-schedulers"
+      ],
+      "paradigm": "event",
+      "params": {
+        "capacity_variance": 0.6,
+        "cpu_request": "24000m",
+        "memory_request": "192Gi",
+        "num_nodes": 10000,
+        "num_schedulers": 8,
+        "pods_per_node": 1
+      },
+      "trials": 5
+    }
+  ],
+  "inputs": {
+    "alibaba-cluster-trace-v2018": {
+      "figures": [
+        "trace-arrival-rate"
+      ],
+      "file": "batch_task.csv",
+      "sha256": "6346b0726c6e10466a585c67645af807b425b5be091caf410f5e1aff41a270bc",
+      "source": "https://github.com/alibaba/clusterdata/tree/master/cluster-trace-v2018"
+    }
+  },
+  "schema": "parkour-registry/v1"
+}

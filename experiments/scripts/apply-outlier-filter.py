@@ -1,56 +1,43 @@
 #!/usr/bin/env python3
 """
-Apply duration-based outlier filter uniformly across all evaluation boards
-and emit filtered medians + per-cell audit log to a markdown report.
+Apply the outlier filter uniformly across all evaluation boards and emit
+filtered medians + per-cell audit log to a markdown report.
 
-Outlier rule (per-cell, where cell = one experiment name):
-  Drop trials whose scheduling_duration_s exceeds BOTH
-    (1) Q3 + 1.5 * IQR    -- standard Tukey rule
-    (2) 2.0 * median       -- magnitude floor; protects narrow-IQR cells
+The filter is `common/trials.py`, the one the figure export applies, so the
+numbers here and the numbers in the figures come from the same rule. See that
+module for the rule itself.
 
-In addition to duration outliers, also drop "metrics-hole" trials where the
-run completed but Prometheus failed to capture conflict counters:
-  scheduled_pods >= 0.9 * expected_pods AND acf_count == 0 AND bind_conflict_count == 0
-   AND at least 2 OTHER trials in the same cell have bind_conflict_rate > 1%
-   (requiring 2 evidence trials avoids over-flagging legitimately-low-conflict
-    cells, e.g. single-scheduler runs where one trial happened to record a
-    handful of retries while siblings recorded zero — that's noise, not a hole).
+The report reads the per-trial table process-results.py writes for each board,
+`<results>/<board>/summary.csv`, so unlike the figure pipeline it needs the raw
+results. It writes into the work directory unless told otherwise.
 
 Usage:
-    python apply-outlier-filter.py            # write filtered-eval-data.md
-    python apply-outlier-filter.py --stdout   # also print to stdout
+    python apply-outlier-filter.py --results <root>              # write experiments/work/filtered-eval-data.md
+    python apply-outlier-filter.py --results <root> --out <file>
+    python apply-outlier-filter.py --results <root> --stdout     # also print to stdout
 """
 
 import argparse
 import csv
-import math
-import os
 import statistics
 import sys
 from collections import defaultdict
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
-RESULTS = REPO / "experiments" / "results"
+_EXPERIMENTS = Path(__file__).resolve().parents[1]
+if str(_EXPERIMENTS) not in sys.path:
+    sys.path.insert(0, str(_EXPERIMENTS))
+
+from common.trials import FILTER_VERSION, as_float, filter_cell  # noqa: E402
+
 BOARDS = ["B1", "B2", "B3", "K", "P", "ablation", "strategy"]
 
-OUT_PATH = REPO / "paper" / "eval-data-filtered.md"
+DEFAULT_OUT = _EXPERIMENTS / "work" / "filtered-eval-data.md"
 
 
-def _f(s):
-    """float-or-None for csv string."""
-    if s is None or s == "":
-        return None
-    try:
-        v = float(s)
-        return v if math.isfinite(v) else None
-    except (ValueError, TypeError):
-        return None
-
-
-def load_board(board: str) -> dict:
+def load_board(results: Path, board: str) -> dict:
     """Return: {exp_name: [trial_dict, ...]}."""
-    path = RESULTS / board / "summary.csv"
+    path = results / board / "summary.csv"
     if not path.is_file():
         return {}
     cells = defaultdict(list)
@@ -61,103 +48,31 @@ def load_board(board: str) -> dict:
     return cells
 
 
-def median_iqr(xs):
-    if not xs:
-        return None, None, None
-    if len(xs) == 1:
-        return xs[0], xs[0], xs[0]
-    s = sorted(xs)
-    q1 = statistics.quantiles(s, n=4, method="inclusive")[0]
-    q3 = statistics.quantiles(s, n=4, method="inclusive")[2]
-    return statistics.median(s), q1, q3
-
-
-def filter_cell(trials):
-    """Return (kept_trials, drops). drops is list of (trial_label, reason, dur, tp, acf)."""
+def audited_filter(trials):
+    """Return (kept_trials, drops) from the shared filter, where drops is a list
+    of (trial_label, reason, dur, tp, acf) for the audit log."""
+    kept, dropped = filter_cell(trials)
+    by_label = {str(t.get("trial", "?")): t for t in trials}
+    if len(by_label) != len(trials):
+        raise SystemExit(f"{trials[0].get('experiment')}: a trial number appears twice")
     drops = []
-
-    # First pass: drop invalid (no scheduled_pods or zero)
-    valid = []
-    for t in trials:
-        sp = _f(t.get("scheduled_pods"))
-        if sp is None or sp <= 0:
-            drops.append((t.get("trial", "?"), "invalid (no scheduled pods)",
-                          _f(t.get("scheduling_duration_s")),
-                          _f(t.get("throughput_pods_per_s")),
-                          _f(t.get("acf_rate"))))
-            continue
-        valid.append(t)
-
-    if not valid:
-        return [], drops
-
-    # Second pass: metrics-hole detection.
-    # A trial is a "metrics hole" if acf_count == 0 AND bind_conflict_count == 0
-    # AND scheduled_pods >= 90% expected AND >=2 other trials in the same cell
-    # have bind_conflict_rate > 1% (i.e., the cell has clear evidence that
-    # conflicts happen here, so a 0/0 reading is anomalous).
-    bc_rates = [_f(t.get("bind_conflict_rate")) or 0 for t in valid]
-    n_evidence = sum(1 for r in bc_rates if r > 0.01)
-    cell_has_conflict = n_evidence >= 2
-
-    after_hole = []
-    for t in valid:
-        sp = _f(t.get("scheduled_pods"))
-        ep = _f(t.get("expected_pods")) or sp
-        acf_c = _f(t.get("acf_count"))
-        bc_c = _f(t.get("bind_conflict_count"))
-        is_hole = (
-            cell_has_conflict
-            and (acf_c is not None and acf_c == 0)
-            and (bc_c is not None and bc_c == 0)
-            and (ep > 0 and sp / ep >= 0.9)
-        )
-        if is_hole:
-            drops.append((t.get("trial", "?"), "metrics hole (acf=bc=0 mid-cell)",
-                          _f(t.get("scheduling_duration_s")),
-                          _f(t.get("throughput_pods_per_s")),
-                          _f(t.get("acf_rate"))))
-        else:
-            after_hole.append(t)
-
-    # Third pass: duration outlier  (max(Q3+1.5*IQR, 2*median))
-    if len(after_hole) < 4:
-        return after_hole, drops
-    durs = [_f(t.get("scheduling_duration_s")) for t in after_hole]
-    durs_clean = [d for d in durs if d is not None]
-    if len(durs_clean) < 4:
-        return after_hole, drops
-    med, q1, q3 = median_iqr(durs_clean)
-    upper = max(q3 + 1.5 * (q3 - q1), 2.0 * med)
-    keep = []
-    for t, d in zip(after_hole, durs):
-        if d is not None and d > upper:
-            drops.append((t.get("trial", "?"),
-                          f"dur={d:.1f}s > upper={upper:.1f}s",
-                          d,
-                          _f(t.get("throughput_pods_per_s")),
-                          _f(t.get("acf_rate"))))
-        else:
-            keep.append(t)
-    return keep, drops
+    for label, reason in dropped:
+        t = by_label[label]
+        drops.append((label, reason,
+                      as_float(t.get("scheduling_duration_s")),
+                      as_float(t.get("throughput_pods_per_s")),
+                      as_float(t.get("acf_rate"))))
+    return kept, drops
 
 
 def aggregate_cell(trials):
     """Return dict of summary stats from kept trials."""
     def med(field):
-        xs = [_f(t.get(field)) for t in trials]
+        xs = [as_float(t.get(field)) for t in trials]
         xs = [x for x in xs if x is not None]
         if not xs:
             return None
         return statistics.median(xs)
-
-    def iqr_str(field, fmt="{:.2f}"):
-        xs = [_f(t.get(field)) for t in trials]
-        xs = [x for x in xs if x is not None]
-        if not xs:
-            return "—"
-        m, q1, q3 = median_iqr(xs)
-        return fmt.format(m)
 
     return {
         "n":       len(trials),
@@ -194,14 +109,14 @@ def fmt_gi(x, p=2, na="—"):
     return f"{x / (1024 ** 3):.{p}f}"
 
 
-def process_all():
+def process_all(results: Path):
     by_board = {}
     audit = []   # (board, exp, drops)
     for b in BOARDS:
-        cells = load_board(b)
+        cells = load_board(results, b)
         bdata = {}
         for exp, trials in sorted(cells.items()):
-            kept, drops = filter_cell(trials)
+            kept, drops = audited_filter(trials)
             agg = aggregate_cell(kept)
             agg["n_total"] = len(trials)
             agg["dropped"] = len(drops)
@@ -219,8 +134,9 @@ def process_all():
 def emit_audit(audit, lines):
     lines.append("## 0. Outlier audit log")
     lines.append("")
-    lines.append("Filter rule: `dur > max(Q3+1.5×IQR, 2×median)` OR "
-                 "`metrics hole (acf=bc=0)` OR `invalid (no scheduled pods)`. "
+    lines.append(f"Filter rule (`common/trials.py`, {FILTER_VERSION}): "
+                 "`duration > max(Q3+1.5×IQR, 2×median)` OR "
+                 "`metrics hole (acf=bind=0)` OR `no scheduled pods`. "
                  "Cells with <4 valid trials skip the duration test.")
     lines.append("")
     lines.append("| Board | Experiment | Trial | Reason | tp | acf |")
@@ -451,11 +367,16 @@ def emit_strategy(d, lines):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--results", type=Path, required=True,
+                    help="results root with one directory per board, each "
+                         "holding process-results.py's summary.csv")
+    ap.add_argument("--out", type=Path, default=DEFAULT_OUT,
+                    help="report path (default: experiments/work/filtered-eval-data.md)")
     ap.add_argument("--stdout", action="store_true",
                     help="also print result to stdout")
     args = ap.parse_args()
 
-    by_board, audit = process_all()
+    by_board, audit = process_all(args.results)
 
     lines = []
     lines.append("# Filtered evaluation data (outlier-cleaned)")
@@ -473,9 +394,9 @@ def main():
     emit_strategy(by_board.get("strategy", {}), lines)
 
     text = "\n".join(lines) + "\n"
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(text, encoding="utf-8")
-    print(f"Wrote {OUT_PATH}")
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(text, encoding="utf-8")
+    print(f"Wrote {args.out}")
     if args.stdout:
         sys.stdout.write(text)
     return 0

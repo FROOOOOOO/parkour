@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Real workload benchmark for Para-Sched (Board E — design.md §9).
+# Real workload benchmark for Para-Sched: the application-layer check.
 #
-# Deploys nginx/redis/mysql to physical worker nodes (C/D/E), runs benchmarks,
+# Deploys nginx/redis/mysql to the three physical worker nodes, runs benchmarks,
 # and measures application-level performance to validate scheduling quality.
 #
-# v3 (2026-05-08 — per-trial-redeploy redesign, addresses eval-data §7.11):
+# v3 (2026-05-08 — per-trial-redeploy redesign):
 #   - Each trial now performs a FULL schedule+benchmark cycle:
 #       cleanup namespace → redeploy stress+workloads → re-schedule
 #       → record placement-quality → run benchmark → cooldown
@@ -35,22 +35,33 @@
 #   ./run-workload-bench.sh --strategy E3 --trials 5 --stress-profile heavy
 #
 # Prerequisites:
-#   - Worker nodes C/D/E are Ready (${MASTER_IP:-<MASTER_IP>}/29/30 in default WORKER_NODES)
+#   - The three worker nodes are Ready: WORKER_IPS / WORKER_NAMES
 #   - Para-sched components deployed (setup.sh)
 #   - wrk, redis-benchmark, sysbench available on master node
 #   - python3 (for placement-quality + summary aggregation)
+#
+# Site configuration, from the environment or experiments/site.env:
+#   MASTER_IP       the master node, which serves the benchmarks' NodePorts
+#   WORKER_IPS      the three physical workers' IPs (node_exporter queries)
+#   WORKER_NAMES    their node names as registered with Kubernetes, same order
+#   PROMETHEUS_URL  Prometheus endpoint (default: http://localhost:9091)
+#
+# Runs are written under the results root's D directory, as run-supplementary.sh
+# records the published benchmark.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-RESULTS_DIR="$PROJECT_ROOT/experiments/results"
+# shellcheck source=lib/common.sh
+. "$SCRIPT_DIR/lib/common.sh"
+RESULTS_DIR="$RESULTS_ROOT/D"
 DEPLOY_DIR="$PROJECT_ROOT/para-scheduler/deploy/lab-cluster"
 NAMESPACE="workload-bench"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # Default parameters
-# Sized for 3 workers × 24 CPU / 32 GB each (C/D/E in setup.md §1):
+# Sized for 3 workers × 24 CPU / 32 GB each:
 #   allocatable per node ≈ 22 CPU / 30 GB (after system reserves)
 #   workload request total (27 CPU, 27 GB) → ~50% util under heavy stress (54 CPU free)
 #   ~6 workload pod/node average, room for scheduler to actually pick a node.
@@ -69,14 +80,13 @@ WARMUP=false              # Prepend a throwaway trial whose results are discarde
                           # ramp, page cache warmup) before measured trials begin.
 COOLDOWN=10               # seconds between trials (let CPU/network settle, prior
                           # workload pods fully terminate before next redeploy)
-PROMETHEUS_URL="http://${MONITORING_IP:-<MONITORING_IP>}:9091"
-MASTER_IP="${MASTER_IP:-<MASTER_IP>}"
+PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9091}"
 
-# Worker nodes (physical) — IPs for Prometheus node_exporter queries;
-# node names are hard-coded to match our kubeadm-registered worker hostnames
-# (setup.md §1 — C/D/E: vm-9-28, vm-9-29, vm-9-30).
-WORKER_NODES=("${MASTER_IP:-<MASTER_IP>}" "${MASTER_IP:-<MASTER_IP>}" "<WORKER_IP>")
-WORKER_NODE_NAMES=("vm-9-28" "vm-9-29" "vm-9-30")
+# Worker nodes (physical) — IPs for Prometheus node_exporter queries, and the
+# node names they are registered under, in the same order. Checked once the
+# options are read, so that --help needs no site configuration.
+read -r -a WORKER_NODES <<< "${WORKER_IPS:-}"
+read -r -a WORKER_NODE_NAMES <<< "${WORKER_NAMES:-}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -137,15 +147,15 @@ Trial design (v3):
     6. Cooldown
   Summary aggregates per-trial app metrics (mean ± stddev across N trials).
 
-Resource budget (on 3 × 24C32G workers, setup.md §1):
+Resource budget (on 3 × 24C32G workers):
   Allocatable per node  ≈ 22 CPU / 30 GB (after system reserves)
   Workload total request = 27 CPU / 27 GB (nginx+redis+mysql @ 750m/1CPU)
   Under heavy stress: workload/available = 27/54 = 50% utilization,
   leaving a ~8-CPU gradient between node[0] (22 free) and node[2] (14 free)
   for the scheduler's placement decision to actually matter.
 
-Validates scheduling quality on a 3-worker physical cluster (Board E).
-Board A optima (K=K_E*, p=p_E*, strategy=strategy_E*) can be injected via env:
+Validates scheduling quality on a 3-worker physical cluster. run-supplementary.sh
+runs the published matrix. K, p and the strategy can be overridden via env:
   CANDIDATE_K, PENALTY, STRATEGY_NAME
 EOF
             exit 0
@@ -157,6 +167,12 @@ done
 
 if [ -z "$STRATEGY" ]; then
     echo "Error: --strategy is required (E2|E3|P1|P4)"
+    exit 1
+fi
+
+: "${MASTER_IP:?set MASTER_IP in experiments/site.env or the environment}"
+if [ ${#WORKER_NODES[@]} -ne 3 ] || [ ${#WORKER_NODE_NAMES[@]} -ne 3 ]; then
+    echo "Error: set WORKER_IPS and WORKER_NAMES, three each, in experiments/site.env or the environment"
     exit 1
 fi
 
@@ -231,7 +247,7 @@ case $STRATEGY in
         CANDIDATE_K="${CANDIDATE_K:-0}"; PENALTY="${PENALTY:-0.0}"
         ;;
     E3)
-        # Proposed event-driven (board-A-optima); env can override K/p
+        # Proposed event-driven (ParKour: K=2, p=0.5); env can override K/p
         CANDIDATE_K="${CANDIDATE_K:-2}"; PENALTY="${PENALTY:-0.5}"
         ;;
     P1)

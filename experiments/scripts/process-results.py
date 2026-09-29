@@ -31,9 +31,14 @@ import math
 import os
 import re
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
+
+_EXPERIMENTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _EXPERIMENTS not in sys.path:
+    sys.path.insert(0, _EXPERIMENTS)
+
+from common import cl2  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -211,141 +216,6 @@ def parse_pod_distribution(path: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# CL2 log parsing
-# ---------------------------------------------------------------------------
-
-# Step marker regex: I0413 14:19:26.710238 ... Step "[step: 03] Creating saturation pods" started
-#
-# We capture the fractional seconds suffix so saturation duration retains
-# millisecond precision. Pre-fix the regex consumed `\.\d+` without capturing,
-# which forced _parse_cl2_timestamp to round timestamps to whole seconds —
-# producing scheduling_duration_s that was ±1s off the true wall-clock value
-# and was unable to distinguish sub-second differences between pattern variants.
-_STEP_RE = re.compile(
-    r'^[A-Z](\d{4})\s+(\d{2}:\d{2}:\d{2}\.\d+)\s+\d+\s+\S+\]\s+'
-    r'Step\s+"\[step:\s*\d+\]\s+(.+?)"\s+(started|ended)'
-)
-
-# Pod status line:
-# WaitForControlledPodsRunning: namespace(...), controlledBy(...):
-#   Pods: 100 out of 100 created, 0 running (0 updated), 0 pending scheduled,
-#   100 not scheduled, 0 inactive, 0 terminating, 0 unknown, 0 runningButNotReady
-_POD_STATUS_RE = re.compile(
-    r'Pods:\s*(\d+)\s+out\s+of\s+(\d+)\s+created,\s*'
-    r'(\d+)\s+running\s+\((\d+)\s+updated\),\s*'
-    r'(\d+)\s+pending\s+scheduled,\s*'
-    r'(\d+)\s+not\s+scheduled'
-)
-
-# Error line for timeout: "got context deadline exceeded while waiting for N pods"
-_TIMEOUT_RE = re.compile(
-    r'WaitForControlledPodsRunning:.*error.*context deadline exceeded.*'
-    r'(\d+)\s+running.*?(\d+)\s+pending\s+scheduled.*?(\d+)\s+not\s+scheduled'
-)
-
-# SchedulingThroughput result embedded in CL2 log (JSON object in log line)
-_SCHED_THROUGHPUT_RE = re.compile(r'SchedulingThroughput:\s*(\{.*\})')
-
-# Test status
-_TEST_STATUS_RE = re.compile(r'Status:\s*(Success|Fail)')
-
-
-def _parse_cl2_timestamp(mmdd: str, hhmmss: str, year: int = None) -> float:
-    """Parse CL2 log timestamp into a Unix timestamp with sub-second precision.
-
-    Accepts either ``HH:MM:SS`` or ``HH:MM:SS.ffffff`` (fractional seconds).
-    The CL2 / klog format always emits microsecond precision; the millisecond
-    granularity matters because saturation throughput at 10000 nodes lands in
-    the 1-3 second range, where rounding to whole seconds discards 30-100%
-    of the signal.
-    """
-    if year is None:
-        year = datetime.now().year
-    month, day = int(mmdd[:2]), int(mmdd[2:])
-    if '.' in hhmmss:
-        hms, frac = hhmmss.split('.', 1)
-        # Pad/truncate to 6 digits so it parses as microseconds regardless of
-        # the source's precision (klog uses 6, but be defensive).
-        frac = (frac + '000000')[:6]
-        micro = int(frac)
-    else:
-        hms = hhmmss
-        micro = 0
-    h, m, s = hms.split(':')
-    dt = datetime(year, month, day, int(h), int(m), int(s), micro, tzinfo=timezone.utc)
-    return dt.timestamp()
-
-
-def parse_cl2_log(log_path: str) -> dict:
-    """Extract key information from a CL2 log file.
-
-    Returns dict with:
-      step_times: {step_name: {started: ts, ended: ts}}
-      pod_summary: {created, running, pending_scheduled, not_scheduled}  (last status)
-      timeout_namespaces: list of namespaces that timed out
-      test_status: 'Success' | 'Fail' | 'Unknown'
-      scheduling_throughput: parsed from CL2's SchedulingThroughput measurement
-    """
-    result = {
-        'step_times': {},
-        'timeout_namespaces': [],
-        'timeout_not_scheduled': 0,     # from timeout error lines ONLY
-        'timeout_pending_scheduled': 0,  # from timeout error lines ONLY
-        'timeout_running': 0,            # from timeout error lines ONLY
-        'test_status': 'Unknown',
-        'scheduling_throughput': None,
-    }
-
-    if not os.path.isfile(log_path):
-        return result
-
-    year = datetime.now().year
-
-    with open(log_path, 'r', errors='replace') as f:
-        for line in f:
-            # Step markers
-            m = _STEP_RE.search(line)
-            if m:
-                mmdd, hhmmss, step_name, event = m.groups()
-                ts = _parse_cl2_timestamp(mmdd, hhmmss, year)
-                if step_name not in result['step_times']:
-                    result['step_times'][step_name] = {}
-                result['step_times'][step_name][event] = ts
-
-            # Timeout errors — these are logged BEFORE the deletion phase starts,
-            # so the pod counts here reflect the true scheduling state at timeout.
-            # Example: "error for test-xxx/saturation-deployment-0: got context
-            # deadline exceeded ... 0 running ..., 0 pending scheduled, 100 not scheduled"
-            if 'context deadline exceeded' in line and 'WaitForControlledPodsRunning' in line:
-                ns_m = re.search(r'namespace\(([^)]+)\)', line)
-                if ns_m:
-                    result['timeout_namespaces'].append(ns_m.group(1))
-                # Extract pod counts from the timeout error line itself
-                m_status = _POD_STATUS_RE.search(line)
-                if m_status:
-                    _, _, running, _, pending, not_sched = (
-                        int(x) for x in m_status.groups())
-                    result['timeout_not_scheduled'] += not_sched
-                    result['timeout_pending_scheduled'] += pending
-                    result['timeout_running'] += running
-
-            # SchedulingThroughput JSON embedded in log
-            m_thr = _SCHED_THROUGHPUT_RE.search(line)
-            if m_thr:
-                try:
-                    result['scheduling_throughput'] = json.loads(m_thr.group(1))
-                except json.JSONDecodeError:
-                    pass
-
-            # Test status
-            m_st = _TEST_STATUS_RE.search(line)
-            if m_st:
-                result['test_status'] = m_st.group(1)
-
-    return result
-
-
-# ---------------------------------------------------------------------------
 # Helpers: read metric files
 # ---------------------------------------------------------------------------
 
@@ -442,28 +312,6 @@ def _prom_sum_last_values(data: Optional[dict]) -> Optional[int]:
         return None
 
 
-def _prom_timeseries_values(data: Optional[dict]) -> list:
-    """Extract (timestamp, value) pairs from a Prometheus range query result."""
-    if not data:
-        return []
-    try:
-        results = data['data']['result']
-        if not results:
-            return []
-        values = []
-        for r in results:
-            for ts, val in r.get('values', []):
-                try:
-                    v = float(val)
-                    if not math.isnan(v):
-                        values.append((float(ts), v))
-                except ValueError:
-                    pass
-        return values
-    except (KeyError, TypeError):
-        return []
-
-
 # ---------------------------------------------------------------------------
 # Core: process a single trial
 # ---------------------------------------------------------------------------
@@ -476,9 +324,13 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
     params = config.get('parameters', {})
     metrics_dir = os.path.join(trial_dir, 'metrics-saturation')
 
-    # ---- 1. CL2 log (ground truth) ----
-    cl2 = parse_cl2_log(os.path.join(trial_dir, 'cl2.log'))
+    # ---- 1. CL2 log (ground truth), parsed by common/cl2.py ----
+    # Step times keep the log's microseconds: at 10000 nodes saturation lasts
+    # only a few seconds, and whole seconds would discard much of the signal.
     timing = _load_json(os.path.join(trial_dir, 'timing.json')) or {}
+    log_path = os.path.join(trial_dir, 'cl2.log')
+    log = (cl2.read(log_path, cl2.trial_reference(timing))
+           if os.path.isfile(log_path) else cl2.Log())
 
     # Compute expected total pods from config
     num_nodes = int(params.get('num_nodes', 0))
@@ -486,13 +338,8 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
     expected_pods = num_nodes * ppn
 
     # Scheduling duration from CL2 step timestamps (most accurate)
-    sat_start = None
-    sat_end = None
-    for step_name, times in cl2['step_times'].items():
-        if 'Creating saturation pods' in step_name:
-            sat_start = times.get('started')
-        if 'Waiting for saturation pods to be running' in step_name:
-            sat_end = times.get('ended')
+    sat_start = log.step_time(*cl2.SATURATION_START)
+    sat_end = log.step_time(*cl2.SATURATION_END)
 
     # Fallback to timing.json
     if sat_start is None:
@@ -504,7 +351,12 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
     if sat_start and sat_end:
         scheduling_duration = float(sat_end) - float(sat_start)
 
-    is_timeout = len(cl2['timeout_namespaces']) > 0
+    # Only the saturation phase's own waits count. The latency phase can time out
+    # as well, but its pods are not among expected_pods, so counting its
+    # unscheduled pods would undercount the saturation phase.
+    saturation_timeouts = [timeout for timeout in log.timeouts
+                           if cl2.is_saturation(timeout.controller)]
+    is_timeout = any(timeout.namespace is not None for timeout in saturation_timeouts)
 
     # Determine actually scheduled pods.
     #
@@ -531,7 +383,8 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
         # so they reflect the true scheduling state.
         # scheduled = expected - not_scheduled (pending_scheduled counts as scheduled
         # because the scheduler did assign a node, KWOK just hasn't confirmed yet).
-        not_sched = cl2['timeout_not_scheduled']
+        not_sched = sum(timeout.pods.not_scheduled
+                        for timeout in saturation_timeouts if timeout.pods)
         if not_sched > 0:
             cl2_scheduled_pods = expected_pods - not_sched
         else:
@@ -731,13 +584,13 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
     pod_attempts_p99 = _prom_instant_value(
         _load_json(os.path.join(metrics_dir, 'pod_scheduling_attempts_p99.json')))
 
-    # ---- 10. Cold-start observability (design-parsync-pull-fix.md §4.6.4) ----
+    # ---- 10. Cold-start observability ----
     # Cold-start duration = max(first_snapshot_applied across partitions) - sat_start.
     # Sign convention (negative values are kept, not clipped):
     #   negative → all partitions completed first apply BEFORE saturation began
     #              (the readiness gate worked; ParSync was warm at load start).
     #   positive → cold-start window overlapped with the saturation phase
-    #              (G5 in design §6.1 wants this < 3s).
+    #              (the design target is under 3 s).
     # NaN-tolerant: missing partitions are skipped rather than zeroing the result.
     fsa_data = _load_json(os.path.join(metrics_dir, 'first_snapshot_applied.json'))
     first_snap_max = None
@@ -757,7 +610,7 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
 
     # Assumed pod count P99 (gauge sampled over experiment window). High values
     # indicate accumulating assumed pods — TTL bug or partitionID=-1 nodes
-    # retaining state forever (see design §4.5.1).
+    # retaining state forever.
     assumed_count_data = _load_json(os.path.join(metrics_dir, 'assumed_pod_count.json'))
     assumed_pod_count_p99 = None
     if assumed_count_data:
@@ -878,7 +731,7 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
         'pod_attempts_p50': pod_attempts_p50,
         'pod_attempts_p99': pod_attempts_p99,
 
-        # Cold-start observability (design-parsync-pull-fix.md §4.6.4)
+        # Cold-start observability
         'cold_start_duration_s': cold_start_duration_s,
         'assumed_pod_count_p99': assumed_pod_count_p99,
         'dispatcher_ready_at': int(dispatcher_ready_at) if dispatcher_ready_at is not None else None,
@@ -890,7 +743,7 @@ def process_trial(experiment_dir: str, trial_dir: str, config: dict) -> dict:
         'is_timeout': is_timeout,
         # CL2 "Fail" can mean SLO violation (latency/throughput threshold exceeded)
         # even when all pods were successfully scheduled.  Distinguish from real failure.
-        'test_status': 'SLO_Fail' if (cl2['test_status'] == 'Fail' and not is_timeout) else cl2['test_status'],
+        'test_status': 'SLO_Fail' if (log.result == 'Fail' and not is_timeout) else log.result,
         'bind_success': int(round(prom_bind_success)),
         'prom_scheduled': int(round(prom_scheduled)),
     }
@@ -1082,12 +935,6 @@ def _safe_stddev(vals: list[float]) -> float:
     return math.sqrt(sum((x - m) ** 2 for x in vals) / (len(vals) - 1))
 
 
-def _experiment_group_name(dirname: str) -> str:
-    """Strip timestamp suffix: 'A2-2000n-P4_20260413_143240' -> 'A2-2000n-P4'."""
-    m = re.match(r'^(.+?)_\d{8}_\d{6}$', dirname)
-    return m.group(1) if m else dirname
-
-
 def aggregate_rows(rows: list[dict]) -> list[dict]:
     """Group rows by experiment name and compute mean/stddev per metric.
     Handles both Board A/B/C (CL2) and Board D (workload) rows.
@@ -1140,293 +987,6 @@ def aggregate_rows(rows: list[dict]) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Figure data generation (aligned with design.md chart specs)
-# ---------------------------------------------------------------------------
-
-def generate_figures(agg_rows: list[dict], output_dir: str):
-    """Generate JSON files for each paper figure. Each file contains
-    {x_label, y_label, series: [{label, x, y, yerr}]} ready for plotting.
-    """
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Index by experiment name for lookup.
-    by_name: dict[str, dict] = {r['experiment']: r for r in agg_rows}
-
-    def _series(names: list[str], x_key: str, y_field: str, label: str) -> dict:
-        xs, ys, errs = [], [], []
-        for n in names:
-            r = by_name.get(n)
-            if not r:
-                continue
-            x = r.get(x_key)
-            y = r.get(f'{y_field}_mean')
-            e = r.get(f'{y_field}_std', 0) or 0
-            if x is not None and y is not None:
-                xs.append(x)
-                ys.append(y)
-                errs.append(e)
-        return {'label': label, 'x': xs, 'y': ys, 'yerr': errs}
-
-    def _save(name: str, x_label: str, y_label: str, series_list: list[dict]):
-        valid = [s for s in series_list if s['x']]
-        if not valid:
-            return
-        path = os.path.join(output_dir, f'{name}.json')
-        with open(path, 'w') as f:
-            json.dump({'x_label': x_label, 'y_label': y_label, 'series': valid},
-                      f, indent=2)
-
-    # ---- Detect available scales/configs by scanning experiment names ----
-    def _find(prefix: str, suffix: str) -> list[str]:
-        """Find experiment names matching prefix*suffix, sorted by x-axis value."""
-        matches = sorted(
-            [n for n in by_name if n.startswith(prefix) and n.endswith(suffix)],
-            key=lambda n: by_name[n].get('num_nodes', 0)
-        )
-        return matches
-
-    def _find_sched(prefix: str, suffix: str) -> list[str]:
-        matches = sorted(
-            [n for n in by_name if n.startswith(prefix) and n.endswith(suffix)],
-            key=lambda n: by_name[n].get('num_schedulers', 0)
-        )
-        return matches
-
-    # ==== Board A1: Low-contention scale expansion ====
-    for cfg in ['E1', 'E2', 'E3']:
-        _find('A1-', f'-{cfg}')  # warm up
-    for fig, metric, ylabel in [
-        ('a', 'throughput_pods_per_s', 'Throughput (pods/s)'),
-        ('b', 'scheduling_duration_s', 'Total scheduling time (s)'),
-    ]:
-        series = [_series(_find('A1-', f'-{c}'), 'num_nodes', metric, c)
-                  for c in ['E1', 'E2', 'E3']]
-        _save(f'A1-{fig}', 'Cluster size (nodes)', ylabel, series)
-
-    # ==== Board A2: HC-1 scale expansion (event-driven) ====
-    for fig, metric, ylabel in [
-        ('a', 'throughput_pods_per_s', 'Throughput (pods/s)'),
-        ('b', 'acf_rate', 'Conflict rate (ACF)'),
-        ('c', 'algo_p99_ms', 'P99 scheduling latency (ms)'),
-    ]:
-        series_e = [_series(_find('A2-', f'-{c}'), 'num_nodes', metric, c)
-                    for c in ['E1', 'E2', 'E3']]
-        _save(f'A2-E-{fig}', 'Cluster size (nodes)', ylabel, series_e)
-
-        series_p = [_series(_find('A2-', f'-{c}'), 'num_nodes', metric, c)
-                    for c in ['P1', 'P2', 'P3', 'P4']]
-        _save(f'A2-P-{fig}', 'Cluster size (nodes)', ylabel, series_p)
-
-    # ==== Board A3: HC-1 scheduler scalability ====
-    for fig, metric, ylabel in [
-        ('a', 'throughput_pods_per_s', 'Throughput (pods/s)'),
-        ('b', 'acf_rate', 'Conflict rate (ACF)'),
-    ]:
-        series_e = [_series(_find_sched('A3-', f'-{c}'), 'num_schedulers', metric, c)
-                    for c in ['E2', 'E3']]
-        _save(f'A3-E-{fig}', 'Number of schedulers', ylabel, series_e)
-
-        series_p = [_series(_find_sched('A3-', f'-{c}'), 'num_schedulers', metric, c)
-                    for c in ['P3', 'P4']]
-        _save(f'A3-P-{fig}', 'Number of schedulers', ylabel, series_p)
-
-    # ==== Board B: Ablation (bar charts) ====
-    for suffix, configs in [
-        ('E', ['AbE0-base', 'AbE1-M', 'AbE2-P', 'AbE3-MP']),
-        ('P', ['AbP0-base', 'AbP1-M', 'AbP2-P', 'AbP3-MP', 'AbP4-ML', 'AbP5-MPL']),
-    ]:
-        for fig, metric, ylabel in [
-            ('a', 'throughput_pods_per_s', 'Throughput (pods/s)'),
-            ('b', 'acf_rate', 'Conflict rate (ACF)'),
-            ('c', 'bind_conflict_rate', 'Bind conflict rate (candidate-level)'),
-        ]:
-            labels, ys, errs = [], [], []
-            for cfg in configs:
-                r = by_name.get(cfg)
-                if not r:
-                    continue
-                y = r.get(f'{metric}_mean')
-                e = r.get(f'{metric}_std', 0) or 0
-                if y is not None:
-                    labels.append(cfg)
-                    ys.append(y)
-                    errs.append(e)
-            if labels:
-                path = os.path.join(output_dir, f'B-{suffix}-{fig}.json')
-                with open(path, 'w') as f:
-                    json.dump({
-                        'type': 'bar', 'x_label': 'Configuration',
-                        'y_label': ylabel,
-                        'labels': labels, 'y': ys, 'yerr': errs,
-                    }, f, indent=2)
-
-    # ==== Board A3-E-c: Speedup ratio vs E1 ====
-    # Compute speedup = throughput(E2/E3) / throughput(E1) at same scheduler count
-    # E1 reference comes from A1 data (single scheduler throughput)
-    e1_thr = None
-    for n in by_name:
-        if n.startswith('A1-') and n.endswith('-E1'):
-            r = by_name[n]
-            t = r.get('throughput_pods_per_s_mean')
-            if t is not None:
-                e1_thr = t
-                break
-    if e1_thr and e1_thr > 0:
-        for cfg in ['E2', 'E3']:
-            names = _find_sched('A3-', f'-{cfg}')
-            xs, ys, errs = [], [], []
-            for n in names:
-                r = by_name[n]
-                t = r.get('throughput_pods_per_s_mean')
-                e = r.get('throughput_pods_per_s_std', 0) or 0
-                if t is not None:
-                    xs.append(r.get('num_schedulers', 0))
-                    ys.append(round(t / e1_thr, 3))
-                    errs.append(round(e / e1_thr, 3))
-            if xs:
-                path = os.path.join(output_dir, f'A3-E-c-{cfg}.json')
-                with open(path, 'w') as f:
-                    json.dump({
-                        'x_label': 'Number of schedulers',
-                        'y_label': 'Speedup (vs E1)',
-                        'series': [{'label': cfg, 'x': xs, 'y': ys, 'yerr': errs}],
-                    }, f, indent=2)
-
-    # ==== Board B: Ablation (bar charts) ====
-    for suffix, configs in [
-        ('E', ['AbE0-base', 'AbE1-M', 'AbE2-P', 'AbE3-MP']),
-        ('P', ['AbP0-base', 'AbP1-M', 'AbP2-P', 'AbP3-MP', 'AbP4-ML', 'AbP5-MPL']),
-    ]:
-        for fig, metric, ylabel in [
-            ('a', 'throughput_pods_per_s', 'Throughput (pods/s)'),
-            ('b', 'acf_rate', 'Conflict rate (ACF)'),
-            ('c', 'bind_conflict_rate', 'Bind conflict rate (candidate-level)'),
-        ]:
-            labels, ys, errs = [], [], []
-            for cfg in configs:
-                r = by_name.get(cfg)
-                if not r:
-                    continue
-                y = r.get(f'{metric}_mean')
-                e = r.get(f'{metric}_std', 0) or 0
-                if y is not None:
-                    labels.append(cfg)
-                    ys.append(y)
-                    errs.append(e)
-            if labels:
-                path = os.path.join(output_dir, f'B-{suffix}-{fig}.json')
-                with open(path, 'w') as f:
-                    json.dump({
-                        'type': 'bar', 'x_label': 'Configuration',
-                        'y_label': ylabel,
-                        'labels': labels, 'y': ys, 'yerr': errs,
-                    }, f, indent=2)
-
-    # ==== Sensitivity: K, w, strategy ====
-    for fig, metric, ylabel in [
-        ('a', 'throughput_pods_per_s', 'Throughput (pods/s)'),
-        ('b', 'acf_rate', 'Conflict rate (ACF)'),
-    ]:
-        for paradigm in ['E', 'P']:
-            k_names = sorted(
-                [n for n in by_name if n.startswith('Sens-K') and n.endswith(f'-{paradigm}')],
-                key=lambda n: by_name[n].get('candidate_k', 0)
-            )
-            if k_names:
-                s = _series(k_names, 'candidate_k', metric, paradigm)
-                _save(f'Sens-K-{paradigm}-{fig}', 'Backup candidates (K)', ylabel, [s])
-
-            w_names = sorted(
-                [n for n in by_name if n.startswith('Sens-W') and n.endswith(f'-{paradigm}')],
-                key=lambda n: by_name[n].get('penalty_weight', 0)
-            )
-            if w_names:
-                s = _series(w_names, 'penalty_weight', metric, paradigm)
-                _save(f'Sens-W-{paradigm}-{fig}', 'Penalty weight (w)', ylabel, [s])
-
-    # ==== Board D: Workload benchmark (bar charts, D-a/b/c/d) ====
-    d_strategies = ['D1-E2', 'D1-E3']
-
-    def _d_bar(fig_name: str, metrics_labels: list[tuple], ylabel: str):
-        """Generate a grouped bar chart for Board D figures."""
-        chart_data = {'type': 'grouped_bar', 'x_label': 'Strategy',
-                      'y_label': ylabel, 'groups': []}
-        for metric, label in metrics_labels:
-            group = {'label': label, 'strategies': [], 'y': [], 'yerr': []}
-            for strat in d_strategies:
-                r = by_name.get(strat)
-                if not r:
-                    continue
-                y = r.get(f'{metric}_mean')
-                e = r.get(f'{metric}_std', 0) or 0
-                if y is not None:
-                    group['strategies'].append(strat)
-                    group['y'].append(y)
-                    group['yerr'].append(e)
-            if group['y']:
-                chart_data['groups'].append(group)
-        if chart_data['groups']:
-            path = os.path.join(output_dir, f'{fig_name}.json')
-            with open(path, 'w') as f:
-                json.dump(chart_data, f, indent=2)
-
-    # D-a: nginx QPS and P99 latency
-    _d_bar('D-a', [
-        ('nginx_qps', 'QPS'),
-        ('nginx_lat_p99_ms', 'P99 Latency (ms)'),
-    ], 'nginx performance')
-
-    # D-b: redis OPS
-    _d_bar('D-b', [
-        ('redis_set_ops', 'SET OPS'),
-        ('redis_get_ops', 'GET OPS'),
-    ], 'redis performance (ops/s)')
-
-    # D-c: mysql TPS and P95 latency
-    _d_bar('D-c', [
-        ('mysql_tps', 'TPS'),
-        ('mysql_lat_p95_ms', 'P95 Latency (ms)'),
-    ], 'mysql performance')
-
-    # D-d: node resource utilization balance (stddev)
-    _d_bar('D-d', [
-        ('cpu_util_stddev', 'CPU util stddev'),
-        ('mem_util_stddev', 'Memory util stddev'),
-    ], 'Resource utilization balance')
-
-    # ==== Board C1: Resource overhead (bar charts by config) ====
-    for fig, metric, ylabel in [
-        ('a', 'scheduler_cpu_total', 'Scheduler CPU (cores)'),
-        ('b', 'scheduler_mem_rss_total', 'Scheduler Memory RSS (bytes)'),
-    ]:
-        # Compare across A2 HC-1 configs at a reference scale (10000n)
-        labels, ys, errs = [], [], []
-        for cfg in ['E1', 'E2', 'E3', 'P1', 'P2', 'P3', 'P4']:
-            names = _find('A2-', f'-{cfg}')
-            # Pick the largest scale available
-            if names:
-                r = by_name.get(names[-1])
-                if r:
-                    y = r.get(f'{metric}_mean')
-                    e = r.get(f'{metric}_std', 0) or 0
-                    if y is not None:
-                        labels.append(cfg)
-                        ys.append(y)
-                        errs.append(e)
-        if labels:
-            path = os.path.join(output_dir, f'C1-{fig}.json')
-            with open(path, 'w') as f:
-                json.dump({
-                    'type': 'bar', 'x_label': 'Configuration',
-                    'y_label': ylabel,
-                    'labels': labels, 'y': ys, 'yerr': errs,
-                }, f, indent=2)
-
-    n_files = len([f for f in os.listdir(output_dir) if f.endswith('.json')]) if os.path.isdir(output_dir) else 0
-    print(f'Figure data: {output_dir}/ ({n_files} files)')
-
-
-# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -1435,7 +995,7 @@ def main():
         description='Process experiment results into paper-ready data.',
         epilog='Examples:\n'
                '  %(prog)s experiments/results/              # per-trial CSV + JSON\n'
-               '  %(prog)s experiments/results/ --aggregate   # + aggregated summary + figures\n'
+               '  %(prog)s experiments/results/ --aggregate   # + aggregated summary\n'
                '  %(prog)s experiments/results/A2-*           # process matching dirs only\n',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('paths', nargs='+',
@@ -1443,7 +1003,7 @@ def main():
     parser.add_argument('-o', '--output', default='paper_data',
                         help='Output file basename (default: paper_data)')
     parser.add_argument('--aggregate', action='store_true',
-                        help='Also produce aggregated summary (mean/std) and figure data')
+                        help='Also produce aggregated summary (mean/std)')
     args = parser.parse_args()
 
     pairs = discover_experiments(args.paths)
@@ -1545,10 +1105,6 @@ def main():
         with open(agg_json, 'w') as f:
             json.dump(agg_rows, f, indent=2, ensure_ascii=False)
         print(f'Aggregated JSON: {agg_json} ({len(agg_rows)} groups)')
-
-        fig_dir = os.path.dirname(args.output) or '.'
-        fig_dir = os.path.join(fig_dir, 'figures')
-        generate_figures(agg_rows, fig_dir)
 
     # ---- Summary tables ----
     if sched_rows:

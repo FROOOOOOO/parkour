@@ -1,8 +1,12 @@
 # Godel Baseline Deployment (Lab Cluster)
 
-Self-contained deployment for the **vanilla Godel** baseline used by
-`experiments/experiment-design.md` §4.4 — specifically E1 (single Godel
-scheduler) and E2 (Godel-vanilla, N=10 parallel schedulers).
+Self-contained deployment of the **Godel** baseline the cluster experiments
+compare with ([experiment-design.md §4.2](../../../experiments/experiment-design.md#42-baselines)):
+N Godel schedulers in parallel, with N from 2 to 10 in the published cells (the
+registry's `godel` board, listed in
+[matrix.md](../../../experiments/matrix.md#board-godel)).
+`experiments/scripts/run-godel-baseline.sh` scales it to each cell's N and
+resets it between trials.
 
 This deploys **upstream Godel** unmodified. It is **independent** of the
 para-scheduler deployment in
@@ -11,24 +15,23 @@ running in its own `godel-system` namespace.
 
 ## Prerequisites
 
-1. Lab cluster reachable via `kubectl` (B node <MASTER_IP> as master).
-2. `godel-local:latest` image present in the control-plane node's containerd:
+1. A cluster reachable via `kubectl`; the components run on its control-plane node.
+2. The `godel-local:latest` image in the control-plane node's containerd. The
+   build prunes stopped containers and dangling images on the machine it runs on:
    ```bash
    cd godel-scheduler && make docker-images
+   docker save godel-local:latest | ssh <user>@<MASTER_IP> 'sudo ctr -n k8s.io images import -'
    ```
 3. `kustomize`, `envsubst` (gettext-base) on the host that runs `setup.sh`.
 
 ## Usage
 
 ```bash
-# Initial deploy (default N=10 schedulers — E2 configuration)
+# Initial deploy (10 schedulers)
 ./setup.sh
 
-# E1: single scheduler
-./setup.sh --scale 1
-
-# Back to E2: N=10
-./setup.sh --scale 10
+# Change the scheduler count; run-godel-baseline.sh does this for each cell
+./setup.sh --scale 4
 
 # Reset between experiment trials (kwok-pods + scheduler CRD entries cleared,
 # all components rollout-restarted)
@@ -65,7 +68,8 @@ deploy/lab-cluster/
 | Dispatcher | 30201 | 10351 |
 | godel-sched-0 .. godel-sched-9 | 30210 .. 30219 | 10251 each |
 
-All endpoints expose Prometheus metrics + healthz at `/metrics` / `/healthz` (insecure HTTP).
+All endpoints expose Prometheus metrics + healthz at `/metrics` / `/healthz`
+(insecure HTTP); `experiments/manifests/monitoring/prometheus.yml` scrapes them.
 
 ## Multi-scheduler routing
 
@@ -73,14 +77,8 @@ Each scheduler instance receives a unique `--godel-scheduler-name=godel-sched-${
 so it registers its own entry in `schedulers.scheduling.godel.kubewharf.io`.
 The dispatcher auto-discovers these via its scheduler-maintainer and load-balances
 incoming Pods (matched by `spec.schedulerName: godel-scheduler`) across all
-N registered schedulers.
-
-For E1 vs E2 the **only** difference is the scheduler instance count:
-
-| Baseline | N | Command |
-|----------|---|---------|
-| E1 (single Godel) | 1 | `./setup.sh --scale 1` |
-| E2 (Godel-vanilla) | 10 | `./setup.sh --scale 10` |
+N registered schedulers. The published cells differ only in N, which
+`./setup.sh --scale N` sets.
 
 ## CL2 workload routing
 
@@ -89,8 +87,9 @@ To route a CL2 workload to Godel, the Pod spec must set:
 spec:
   schedulerName: godel-scheduler
 ```
-A ready-made testoverride lives at `experiments/scripts/cl2-saturation-godel.yaml`
-(added in a subsequent step).
+`run-godel-baseline.sh` points ClusterLoader2 at
+[`experiments/kwok-setup/kwok-deployment-godel.yaml`](../../../experiments/kwok-setup/kwok-deployment-godel.yaml),
+whose pods set it.
 
 ## Smoke test after deploy
 

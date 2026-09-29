@@ -36,8 +36,8 @@ from figures.fig8_penalty_scope.experiment import (
     MANIFEST as SCOPE_MANIFEST,
     VERIFIED_CACHE as SCOPE_VERIFIED_CACHE,
 )
-from figures.fig8_penalty_scope.plot import draw_legend as draw_scope_legend
-from figures.fig8_penalty_scope.plot import draw_panel as draw_scope_panel
+from figures.fig8_penalty_scope.panels import draw_legend as draw_scope_legend
+from figures.fig8_penalty_scope.panels import draw_panel as draw_scope_panel
 
 GAPS = (0.0, 1.0, 2.5, 5.0)
 PENALTY_ONLY = ((0, 0.0), (0, 0.3), (0, 0.5), (0, 0.7))

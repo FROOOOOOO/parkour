@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Re-query Prometheus for scheduling-quality metrics that the original
-collect-metrics.sh did not snapshot.
+Snapshot a trial's scheduling-quality histograms from Prometheus.
+
+collect-metrics.sh runs this at the end of every trial's saturation phase, so a
+trial's raw results include quality.json when it finishes. Run it by hand only
+for trials recorded before that, and only while Prometheus still holds them.
 
 Two metrics are pulled per trial via histogram snapshot diff (start vs end):
 

@@ -34,6 +34,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# The workers (WORKER_IPS) and the SSH user (SSH_USER) come from the
+# environment or experiments/site.env.
+# shellcheck source=lib/common.sh
+. "$SCRIPT_DIR/lib/common.sh"
 
 # ========== Config ==========
 DEFAULT_IMAGES=(
@@ -42,12 +46,8 @@ DEFAULT_IMAGES=(
     "redis:7-alpine"
     "mysql:8.0"
 )
-DEFAULT_WORKERS=(
-    "<WORKER1_IP>"
-    "<WORKER2_IP>"
-    "<WORKER3_IP>"
-)
-SSH_USER="${SSH_USER:-<user>}"
+read -r -a DEFAULT_WORKERS <<< "${WORKER_IPS:-}"
+SSH_USER="${SSH_USER:-}"
 SSH_OPTS="${SSH_OPTS:--o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10}"
 
 IMAGES=()
@@ -81,6 +81,10 @@ done
 
 [ ${#IMAGES[@]}  -eq 0 ] && IMAGES=("${DEFAULT_IMAGES[@]}")
 [ ${#WORKERS[@]} -eq 0 ] && WORKERS=("${DEFAULT_WORKERS[@]}")
+if [ "$PULL_ONLY" = false ] && { [ ${#WORKERS[@]} -eq 0 ] || [ -z "$SSH_USER" ]; }; then
+    echo "Error: set WORKER_IPS (or pass --workers) and SSH_USER, in experiments/site.env or the environment"
+    exit 1
+fi
 
 echo "============================================"
 echo "Pre-load workload images onto K8s workers"

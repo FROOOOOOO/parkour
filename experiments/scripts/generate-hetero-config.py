@@ -6,7 +6,7 @@ Emits a YAML file consumable by `clusterloader --testoverrides=<file>` that
 pins each of the 10 KWOK shards to a specific CPU / Memory capacity according
 to the requested capacity-variance level V.
 
-Design constraints (see experiments/design.md §HC-V):
+Design constraints (see experiments/experiment-design.md §6.2):
   - pod_size = 24 CPU / 192 Gi (HC-1 baseline, unchanged)
   - Each node must hold exactly 1 pod  =>  24 <= CPU < 48 per shard
   - Total CPU across 10 shards == 320  =>  cluster pod-capacity == N (same as HC-1)
